@@ -56,6 +56,12 @@ function csrf_validate($token) {
     return $ok;
 }
 
+if (!function_exists('generate_csrf_token')) {
+    function generate_csrf_token() {
+        return csrf_token();
+    }
+}
+
 // 3) Authentication functions
 function is_logged_in() {
     return isset($_SESSION['user_id']) && is_numeric($_SESSION['user_id']) && $_SESSION['user_id'] > 0;
@@ -266,5 +272,143 @@ function planwise_install_schema(PDO $pdo) {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 }
 
+function planwise_table_exists(PDO $pdo, string $table): bool {
+    $stmt = $pdo->prepare("SHOW TABLES LIKE ?");
+    $stmt->execute([$table]);
+    return (bool) $stmt->fetchColumn();
+}
+
+function planwise_ensure_column(PDO $pdo, string $table, string $column, string $definition): void {
+    if (!planwise_table_exists($pdo, $table)) {
+        return;
+    }
+
+    $stmt = $pdo->prepare("SHOW COLUMNS FROM `{$table}` LIKE ?");
+    $stmt->execute([$column]);
+    if (!$stmt->fetch()) {
+        $pdo->exec("ALTER TABLE `{$table}` ADD COLUMN {$definition}");
+    }
+}
+
+function planwise_ensure_index(PDO $pdo, string $table, string $indexName, string $definition): void {
+    if (!planwise_table_exists($pdo, $table)) {
+        return;
+    }
+
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS WHERE table_schema = DATABASE() AND table_name = ? AND index_name = ?");
+    $stmt->execute([$table, $indexName]);
+    if ((int) $stmt->fetchColumn() === 0) {
+        $pdo->exec("CREATE INDEX `{$indexName}` ON `{$table}` {$definition}");
+    }
+}
+
+function planwise_get_reports_table(PDO $pdo): string {
+    static $table = null;
+    if ($table !== null) {
+        return $table;
+    }
+
+    $table = planwise_table_exists($pdo, 'planwise_reports_v2') ? 'planwise_reports_v2' : 'planwise_reports';
+    return $table;
+}
+
+function planwise_install_async_schema(PDO $pdo): void {
+    // Task queue for asynchronous processing
+    $pdo->exec("CREATE TABLE IF NOT EXISTS planwise_task_queue (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        task_id VARCHAR(64) NOT NULL UNIQUE,
+        user_id INT NULL,
+        report_id VARCHAR(64) DEFAULT NULL,
+        task_type VARCHAR(50) NOT NULL,
+        status ENUM('pending','processing','completed','failed') DEFAULT 'pending',
+        priority INT DEFAULT 5,
+        payload JSON,
+        result JSON,
+        error_message TEXT,
+        retry_count INT DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        started_at TIMESTAMP NULL,
+        completed_at TIMESTAMP NULL,
+        KEY idx_status_priority (status, priority),
+        KEY idx_user_id (user_id),
+        KEY idx_task_id (task_id),
+        KEY idx_report_id (report_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    // New report table (string identifier based) to avoid conflicts with legacy schema
+    $pdo->exec("CREATE TABLE IF NOT EXISTS planwise_reports_v2 (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        report_id VARCHAR(64) NOT NULL UNIQUE,
+        user_id INT NULL,
+        custom_id VARCHAR(50) DEFAULT NULL,
+        title VARCHAR(255) NOT NULL,
+        business_idea TEXT NOT NULL,
+        industry VARCHAR(100) DEFAULT NULL,
+        target_market VARCHAR(100) DEFAULT NULL,
+        analysis_depth ENUM('basic','standard','deep') DEFAULT 'standard',
+        status ENUM('draft','analyzing','completed','failed') DEFAULT 'draft',
+        visibility ENUM('private','public','shared') DEFAULT 'private',
+        share_token VARCHAR(64) DEFAULT NULL,
+        total_words INT DEFAULT 0,
+        ai_tokens_used INT DEFAULT 0,
+        analysis_preferences JSON DEFAULT NULL,
+        last_error TEXT DEFAULT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        completed_at TIMESTAMP NULL,
+        INDEX idx_user_id (user_id),
+        INDEX idx_custom_id (custom_id),
+        INDEX idx_status (status),
+        INDEX idx_created_at (created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    // Detailed step table for multi-stage report assembly
+    $pdo->exec("CREATE TABLE IF NOT EXISTS planwise_report_steps (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        step_id VARCHAR(64) NOT NULL UNIQUE,
+        report_id VARCHAR(64) NOT NULL,
+        step_number INT NOT NULL,
+        step_name VARCHAR(50) NOT NULL,
+        step_title VARCHAR(100) NOT NULL,
+        task_id VARCHAR(64) DEFAULT NULL,
+        status ENUM('pending','processing','completed','failed','skipped') DEFAULT 'pending',
+        ai_model VARCHAR(50) DEFAULT NULL,
+        prompt_template TEXT,
+        ai_response JSON,
+        formatted_content MEDIUMTEXT,
+        word_count INT DEFAULT 0,
+        tokens_used INT DEFAULT 0,
+        processing_time INT DEFAULT 0,
+        retry_count INT DEFAULT 0,
+        error_message TEXT DEFAULT NULL,
+        error_code VARCHAR(50) DEFAULT NULL,
+        metadata JSON DEFAULT NULL,
+        started_at TIMESTAMP NULL,
+        completed_at TIMESTAMP NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY uk_report_step (report_id, step_number),
+        KEY idx_report_id (report_id),
+        KEY idx_task_id (task_id),
+        KEY idx_status (status),
+        KEY idx_step_name (step_name),
+        CONSTRAINT fk_report_steps_report_v2 FOREIGN KEY (report_id) REFERENCES planwise_reports_v2 (report_id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    // Extend user quota table with advanced quota tracking if table exists
+    if (planwise_table_exists($pdo, 'planwise_user_quotas')) {
+        planwise_ensure_column($pdo, 'planwise_user_quotas', 'custom_id', "VARCHAR(50) DEFAULT NULL");
+        planwise_ensure_column($pdo, 'planwise_user_quotas', 'category_group', "VARCHAR(50) DEFAULT 'standard'");
+        planwise_ensure_column($pdo, 'planwise_user_quotas', 'total_tokens', "INT DEFAULT 1000000");
+        planwise_ensure_column($pdo, 'planwise_user_quotas', 'used_tokens', "INT DEFAULT 0");
+        planwise_ensure_column($pdo, 'planwise_user_quotas', 'reset_date', "DATE DEFAULT NULL");
+
+        planwise_ensure_index($pdo, 'planwise_user_quotas', 'idx_custom_id', '(custom_id)');
+        planwise_ensure_index($pdo, 'planwise_user_quotas', 'idx_category_group', '(category_group)');
+    }
+}
+
 // Initialize tables on first load
+$__planwiseBootstrapPdo = planwise_pdo();
 ensure_reports_table();
+planwise_install_schema($__planwiseBootstrapPdo);
+planwise_install_async_schema($__planwiseBootstrapPdo);
