@@ -1,0 +1,179 @@
+<?php
+// /www/wwwroot/planwise.maxcaulfield.cn/api.php
+// PlanWise API: create tasks, get status, tick steps, and assemble report
+
+require_once __DIR__ . '/db_connect.php';
+require_once __DIR__ . '/AI_Service.php';
+
+header('Content-Type: application/json; charset=UTF-8');
+
+function json_ok($data = []) { echo json_encode(['ok' => true] + $data, JSON_UNESCAPED_UNICODE); exit; }
+function json_err($msg, $code = 400, $extra = []) {
+    http_response_code($code);
+    echo json_encode(['ok' => false, 'error' => $msg] + $extra, JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+$action = $_GET['action'] ?? $_POST['action'] ?? null;
+if (!$action) json_err('Missing action', 400);
+
+// Ensure schema exists
+$pdo = planwise_pdo();
+planwise_install_schema($pdo);
+
+// Helpers
+function steps_map() { return AIService::stepsMap(); }
+function steps_order() { return array_keys(steps_map()); }
+
+if ($action === 'create_task') {
+    if ($method !== 'POST') json_err('Method not allowed', 405);
+    $token = $_POST['csrf_token'] ?? '';
+    if (!csrf_validate($token)) json_err('CSRF token invalid', 403);
+
+    $idea  = trim((string)($_POST['business_idea'] ?? ''));
+    $industry = trim((string)($_POST['industry'] ?? ''));
+    $depth = $_POST['analysis_depth'] ?? 'standard';
+    if ($idea === '') json_err('请填写商业想法');
+    if (!in_array($depth, ['basic','standard','deep'], true)) $depth = 'standard';
+
+    $user_id = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : null;
+
+    $stmt = $pdo->prepare("INSERT INTO planwise_tasks (user_id, business_idea, industry, analysis_depth, status, current_step, total_steps)
+                            VALUES (?, ?, ?, ?, 'running', ?, ?)");
+    $all_steps = steps_order();
+    $stmt->execute([$user_id, $idea, ($industry ?: null), $depth, $all_steps[0], count($all_steps)]);
+    $task_id = (int)$pdo->lastInsertId();
+
+    // Insert steps
+    $ins = $pdo->prepare("INSERT INTO planwise_steps (task_id, step_key, step_title, status) VALUES (?, ?, ?, 'pending')");
+    foreach (steps_map() as $key => $title) {
+        $ins->execute([$task_id, $key, $title]);
+    }
+
+    // Return next CSRF for subsequent POSTs
+    $next_csrf = csrf_token();
+    json_ok(['task_id' => $task_id, 'next_csrf' => $next_csrf]);
+}
+
+if ($action === 'get_status') {
+    if ($method !== 'GET') json_err('Method not allowed', 405);
+    $task_id = isset($_GET['task_id']) ? (int)$_GET['task_id'] : 0;
+    if ($task_id <= 0) json_err('Invalid task_id');
+
+    $task = $pdo->prepare("SELECT id, status, current_step, total_steps FROM planwise_tasks WHERE id = ?");
+    $task->execute([$task_id]);
+    $t = $task->fetch();
+    if (!$t) json_err('Task not found', 404);
+
+    $steps = $pdo->prepare("SELECT step_key, step_title, status FROM planwise_steps WHERE task_id = ? ORDER BY id ASC");
+    $steps->execute([$task_id]);
+    $rows = $steps->fetchAll();
+
+    $done = 0; foreach ($rows as $r) { if ($r['status'] === 'completed') $done++; }
+    $progress = $t['total_steps'] > 0 ? round($done * 100 / (int)$t['total_steps']) : 0;
+
+    json_ok([
+        'status' => $t['status'],
+        'current_step' => $t['current_step'],
+        'progress' => $progress,
+        'steps' => $rows,
+    ]);
+}
+
+if ($action === 'tick') {
+    if ($method !== 'POST') json_err('Method not allowed', 405);
+    $token = $_POST['csrf_token'] ?? '';
+    if (!csrf_validate($token)) json_err('CSRF token invalid', 403);
+
+    $task_id = isset($_POST['task_id']) ? (int)$_POST['task_id'] : 0;
+    if ($task_id <= 0) json_err('Invalid task_id');
+
+    // Load task
+    $taskStmt = $pdo->prepare("SELECT * FROM planwise_tasks WHERE id = ?");
+    $taskStmt->execute([$task_id]);
+    $task = $taskStmt->fetch();
+    if (!$task) json_err('Task not found', 404);
+    if ($task['status'] === 'completed') {
+        $next_csrf = csrf_token();
+        json_ok(['message' => 'already completed', 'next_csrf' => $next_csrf]);
+    }
+
+    $steps = steps_order();
+
+    // Find next pending step
+    $stepStmt = $pdo->prepare("SELECT * FROM planwise_steps WHERE task_id = ? AND status IN ('pending','running') ORDER BY id ASC LIMIT 1");
+    $stepStmt->execute([$task_id]);
+    $step = $stepStmt->fetch();
+
+    if (!$step) {
+        // No more steps -> assemble report and mark completed
+        $all = $pdo->prepare("SELECT step_title, ai_response FROM planwise_steps WHERE task_id = ? ORDER BY id ASC");
+        $all->execute([$task_id]);
+        $parts = $all->fetchAll();
+        $title = 'PlanWise 商业策略报告 #' . $task_id;
+        $exec = '';
+        $full = '';
+        foreach ($parts as $p) {
+            $full .= "\n## " . $p['step_title'] . "\n\n" . ($p['ai_response'] ?? '') . "\n";
+        }
+        // Simple executive summary: first ~400 chars
+        $exec = mb_substr(strip_tags($full), 0, 400) . '...';
+
+        $insRep = $pdo->prepare("INSERT INTO planwise_reports (task_id, title, executive_summary, full_content) VALUES (?,?,?,?)");
+        $insRep->execute([$task_id, $title, $exec, $full]);
+
+        $upd = $pdo->prepare("UPDATE planwise_tasks SET status = 'completed', current_step = NULL, completed_at = NOW() WHERE id = ?");
+        $upd->execute([$task_id]);
+
+        $next_csrf = csrf_token();
+        json_ok(['completed' => true, 'next_csrf' => $next_csrf]);
+    }
+
+    // Mark running if pending
+    if ($step['status'] === 'pending') {
+        $upd = $pdo->prepare("UPDATE planwise_steps SET status='running', started_at = NOW() WHERE id = ?");
+        $upd->execute([$step['id']]);
+    }
+
+    // Gather previous step text to provide context
+    $prevText = null;
+    $prevStmt = $pdo->prepare("SELECT ai_response FROM planwise_steps WHERE task_id = ? AND id < ? AND ai_response IS NOT NULL ORDER BY id DESC LIMIT 1");
+    $prevStmt->execute([$task_id, $step['id']]);
+    $prev = $prevStmt->fetch();
+    if ($prev && !empty($prev['ai_response'])) $prevText = $prev['ai_response'];
+
+    // Build analysis
+    $svc = new AIService();
+    $idea = (string)$task['business_idea'];
+    $industry = $task['industry'] ?: null;
+    $depth = (string)$task['analysis_depth'];
+
+    $content = $svc->analyze((string)$step['step_key'], $idea, $industry, $depth, $prevText);
+
+    $upd2 = $pdo->prepare("UPDATE planwise_steps SET ai_response = ?, status='completed', completed_at = NOW() WHERE id = ?");
+    $upd2->execute([$content, $step['id']]);
+
+    // Advance current_step
+    $currentIdx = array_search($step['step_key'], $steps, true);
+    $nextStep = $steps[$currentIdx + 1] ?? null;
+    $upd3 = $pdo->prepare("UPDATE planwise_tasks SET current_step = ? WHERE id = ?");
+    $upd3->execute([$nextStep, $task_id]);
+
+    $next_csrf = csrf_token();
+    json_ok(['step_key' => $step['step_key'], 'step_title' => $step['step_title'], 'content' => $content, 'next_csrf' => $next_csrf]);
+}
+
+if ($action === 'get_report') {
+    if ($method !== 'GET') json_err('Method not allowed', 405);
+    $task_id = isset($_GET['task_id']) ? (int)$_GET['task_id'] : 0;
+    if ($task_id <= 0) json_err('Invalid task_id');
+
+    $stmt = $pdo->prepare("SELECT title, executive_summary, full_content FROM planwise_reports WHERE task_id = ?");
+    $stmt->execute([$task_id]);
+    $rep = $stmt->fetch();
+    if (!$rep) json_err('Report not found', 404);
+    json_ok(['report' => $rep]);
+}
+
+json_err('Unknown action', 404);

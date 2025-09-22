@@ -1,0 +1,310 @@
+<?php
+// PlanWise - 创建报告页面
+require_once __DIR__ . '/db_connect.php';
+session_start();
+
+// 检查用户是否已登录
+if (!is_logged_in()) {
+    header('Location: /login.php');
+    exit();
+}
+
+// 设置页面特定的变量
+$page_title = "创建商业策略分析报告";
+$page_description = "使用PlanWise AI创建详细的商业策略分析报告 - 市场分析、竞争对手研究、财务预测等8个维度的专业分析";
+$canonical_url = "https://planwise.maxcaulfield.cn/report.php";
+
+// 设置面包屑导航
+$breadcrumbs = [
+    '/dashboard.php' => '我的控制台',
+    '创建报告'
+];
+
+// 包含头部
+include __DIR__ . '/includes/header.php';
+?>
+
+<!-- 报告创建表单 -->
+<section class="py-12 min-h-screen" style="background-color: var(--sky-dark);">
+    <div class="container mx-auto px-6">
+        <div class="max-w-4xl mx-auto">
+            <!-- 页面标题 -->
+            <div class="text-center mb-12">
+                <h1 class="text-4xl font-bold text-white mb-6">
+                    创建商业策略分析报告
+                </h1>
+                <p class="text-xl text-gray-300 max-w-3xl mx-auto">
+                    告诉我们您的商业想法，AI将为您生成包含市场分析、竞争研究、财务预测等8个维度的专业报告
+                </p>
+            </div>
+            
+            <!-- 报告生成表单 -->
+            <div class="glass-effect p-8 rounded-xl">
+                <form id="report-form" method="post" action="/api.php">
+                    <input type="hidden" name="action" value="create_report">
+                    
+                    <!-- 基本信息 -->
+                    <div class="mb-8">
+                        <h2 class="text-2xl font-semibold text-white mb-6 flex items-center">
+                            <i class="fas fa-lightbulb mr-3 text-blue-400"></i>
+                            商业想法描述
+                        </h2>
+                        
+                        <div class="mb-6">
+                            <label for="business_title" class="block text-gray-300 font-medium mb-2">
+                                项目标题 <span class="text-red-400">*</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                id="business_title" 
+                                name="business_title" 
+                                required
+                                class="w-full px-4 py-3 bg-gray-800 bg-opacity-50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-blue-400 focus:outline-none transition"
+                                placeholder="例如：智能健康监测手环"
+                                maxlength="100"
+                            >
+                        </div>
+                        
+                        <div class="mb-6">
+                            <label for="business_description" class="block text-gray-300 font-medium mb-2">
+                                详细描述 <span class="text-red-400">*</span>
+                            </label>
+                            <textarea 
+                                id="business_description" 
+                                name="business_description" 
+                                required
+                                rows="6"
+                                class="w-full px-4 py-3 bg-gray-800 bg-opacity-50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-blue-400 focus:outline-none transition resize-y"
+                                placeholder="详细描述您的商业想法，包括产品/服务概念、目标用户、核心功能、预期市场等。描述越详细，AI分析越精准..."
+                                minlength="50"
+                                maxlength="2000"
+                            ></textarea>
+                            <div class="flex justify-between items-center mt-2">
+                                <p class="text-gray-400 text-sm">
+                                    💡 建议至少50字，最多2000字
+                                </p>
+                                <span id="char-count" class="text-gray-400 text-sm">0/2000</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 分析选项 -->
+                    <div class="mb-8">
+                        <h2 class="text-2xl font-semibold text-white mb-6 flex items-center">
+                            <i class="fas fa-cogs mr-3 text-purple-400"></i>
+                            分析选项
+                        </h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- 分析深度 -->
+                            <div>
+                                <label class="block text-gray-300 font-medium mb-3">分析深度</label>
+                                <div class="space-y-3">
+                                    <label class="flex items-center p-3 bg-gray-800 bg-opacity-30 rounded-lg cursor-pointer hover:bg-opacity-50 transition">
+                                        <input type="radio" name="analysis_depth" value="basic" checked class="mr-3 text-blue-500">
+                                        <div class="flex-1">
+                                            <div class="flex items-center justify-between">
+                                                <span class="text-white font-medium">基础版</span>
+                                                <span class="text-green-400 text-sm">免费</span>
+                                            </div>
+                                            <p class="text-gray-400 text-sm mt-1">约5-8分钟 | 核心分析要点</p>
+                                        </div>
+                                    </label>
+                                    
+                                    <label class="flex items-center p-3 bg-gray-800 bg-opacity-30 rounded-lg cursor-pointer hover:bg-opacity-50 transition">
+                                        <input type="radio" name="analysis_depth" value="standard" class="mr-3 text-blue-500">
+                                        <div class="flex-1">
+                                            <div class="flex items-center justify-between">
+                                                <span class="text-white font-medium">标准版</span>
+                                                <span class="text-blue-400 text-sm">推荐</span>
+                                            </div>
+                                            <p class="text-gray-400 text-sm mt-1">约12-15分钟 | 详细分析报告</p>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <!-- 行业类型 -->
+                            <div>
+                                <label for="industry" class="block text-gray-300 font-medium mb-3">行业类型</label>
+                                <select 
+                                    id="industry" 
+                                    name="industry"
+                                    class="w-full px-4 py-3 bg-gray-800 bg-opacity-50 border border-gray-600 rounded-lg text-white focus:border-blue-400 focus:outline-none transition"
+                                >
+                                    <option value="">请选择行业（可选）</option>
+                                    <option value="technology">科技互联网</option>
+                                    <option value="ecommerce">电子商务</option>
+                                    <option value="healthcare">医疗健康</option>
+                                    <option value="education">教育培训</option>
+                                    <option value="finance">金融服务</option>
+                                    <option value="retail">零售消费</option>
+                                    <option value="manufacturing">制造业</option>
+                                    <option value="service">服务业</option>
+                                    <option value="other">其他</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 重点关注 -->
+                    <div class="mb-8">
+                        <h2 class="text-2xl font-semibold text-white mb-6 flex items-center">
+                            <i class="fas fa-bullseye mr-3 text-orange-400"></i>
+                            重点关注领域
+                        </h2>
+                        <p class="text-gray-400 mb-4">选择您最关注的分析维度（可多选，不选择则全部分析）</p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <label class="flex items-center p-3 bg-gray-800 bg-opacity-30 rounded-lg cursor-pointer hover:bg-opacity-50 transition">
+                                <input type="checkbox" name="focus_areas[]" value="market" class="mr-3 text-blue-500">
+                                <i class="fas fa-chart-line mr-2 text-blue-400"></i>
+                                <span class="text-white">市场环境分析</span>
+                            </label>
+                            
+                            <label class="flex items-center p-3 bg-gray-800 bg-opacity-30 rounded-lg cursor-pointer hover:bg-opacity-50 transition">
+                                <input type="checkbox" name="focus_areas[]" value="competition" class="mr-3 text-blue-500">
+                                <i class="fas fa-crosshairs mr-2 text-red-400"></i>
+                                <span class="text-white">竞争对手研究</span>
+                            </label>
+                            
+                            <label class="flex items-center p-3 bg-gray-800 bg-opacity-30 rounded-lg cursor-pointer hover:bg-opacity-50 transition">
+                                <input type="checkbox" name="focus_areas[]" value="users" class="mr-3 text-blue-500">
+                                <i class="fas fa-users mr-2 text-purple-400"></i>
+                                <span class="text-white">目标用户画像</span>
+                            </label>
+                            
+                            <label class="flex items-center p-3 bg-gray-800 bg-opacity-30 rounded-lg cursor-pointer hover:bg-opacity-50 transition">
+                                <input type="checkbox" name="focus_areas[]" value="business_model" class="mr-3 text-blue-500">
+                                <i class="fas fa-building mr-2 text-green-400"></i>
+                                <span class="text-white">商业模式设计</span>
+                            </label>
+                            
+                            <label class="flex items-center p-3 bg-gray-800 bg-opacity-30 rounded-lg cursor-pointer hover:bg-opacity-50 transition">
+                                <input type="checkbox" name="focus_areas[]" value="finance" class="mr-3 text-blue-500">
+                                <i class="fas fa-dollar-sign mr-2 text-yellow-400"></i>
+                                <span class="text-white">财务预测</span>
+                            </label>
+                            
+                            <label class="flex items-center p-3 bg-gray-800 bg-opacity-30 rounded-lg cursor-pointer hover:bg-opacity-50 transition">
+                                <input type="checkbox" name="focus_areas[]" value="risk" class="mr-3 text-blue-500">
+                                <i class="fas fa-shield-alt mr-2 text-orange-400"></i>
+                                <span class="text-white">风险评估</span>
+                            </label>
+                            
+                            <label class="flex items-center p-3 bg-gray-800 bg-opacity-30 rounded-lg cursor-pointer hover:bg-opacity-50 transition">
+                                <input type="checkbox" name="focus_areas[]" value="marketing" class="mr-3 text-blue-500">
+                                <i class="fas fa-bullhorn mr-2 text-pink-400"></i>
+                                <span class="text-white">营销策略</span>
+                            </label>
+                            
+                            <label class="flex items-center p-3 bg-gray-800 bg-opacity-30 rounded-lg cursor-pointer hover:bg-opacity-50 transition">
+                                <input type="checkbox" name="focus_areas[]" value="implementation" class="mr-3 text-blue-500">
+                                <i class="fas fa-route mr-2 text-cyan-400"></i>
+                                <span class="text-white">实施路线图</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- 提交按钮 -->
+                    <div class="text-center">
+                        <button 
+                            type="submit" 
+                            id="submit-btn"
+                            class="btn-primary text-lg px-10 py-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <i class="fas fa-rocket mr-2"></i>
+                            开始生成报告
+                        </button>
+                        
+                        <p class="text-gray-400 text-sm mt-4">
+                            💡 点击后将跳转到生成页面，您可以实时查看AI的分析过程
+                        </p>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- 功能说明 -->
+            <div class="mt-12">
+                <div class="glass-effect p-6 rounded-xl">
+                    <h3 class="text-lg font-semibold text-white mb-4 flex items-center">
+                        <i class="fas fa-info-circle mr-2 text-blue-400"></i>
+                        报告将包含以下内容
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-300">
+                        <div class="flex items-center">
+                            <i class="fas fa-check-circle mr-2 text-green-400"></i>
+                            <span>市场环境与机会分析</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-check-circle mr-2 text-green-400"></i>
+                            <span>主要竞争对手研究</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-check-circle mr-2 text-green-400"></i>
+                            <span>目标用户画像构建</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-check-circle mr-2 text-green-400"></i>
+                            <span>商业模式设计建议</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-check-circle mr-2 text-green-400"></i>
+                            <span>财务预测与建模</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-check-circle mr-2 text-green-400"></i>
+                            <span>风险识别与应对策略</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-check-circle mr-2 text-green-400"></i>
+                            <span>营销推广策略建议</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-check-circle mr-2 text-green-400"></i>
+                            <span>分阶段实施路线图</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+// 字符计数
+document.getElementById('business_description').addEventListener('input', function() {
+    const current = this.value.length;
+    const max = this.getAttribute('maxlength');
+    document.getElementById('char-count').textContent = current + '/' + max;
+});
+
+// 表单提交处理
+document.getElementById('report-form').addEventListener('submit', function(e) {
+    const submitBtn = document.getElementById('submit-btn');
+    const title = document.getElementById('business_title').value.trim();
+    const description = document.getElementById('business_description').value.trim();
+    
+    if (title.length === 0 || description.length < 50) {
+        e.preventDefault();
+        alert('请确保项目标题不为空，且描述至少50个字符');
+        return;
+    }
+    
+    // 禁用按钮并显示加载状态
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>正在处理...';
+    
+    // 防止多次提交
+    setTimeout(() => {
+        if (!submitBtn.disabled) return;
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-rocket mr-2"></i>开始生成报告';
+    }, 10000); // 10秒后重新启用按钮
+});
+</script>
+
+<?php
+// 包含尾部
+include __DIR__ . '/includes/footer.php';
+?>

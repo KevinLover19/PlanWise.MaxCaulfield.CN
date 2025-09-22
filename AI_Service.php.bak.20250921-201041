@@ -1,0 +1,116 @@
+<?php
+// /www/wwwroot/planwise.maxcaulfield.cn/AI_Service.php
+// LLM integration with a safe mock fallback
+
+class AIService {
+    private string $provider;
+    private ?string $apiKey;
+    private string $model;
+    private int $timeout;
+
+    public function __construct() {
+        $this->provider = getenv('PLANWISE_AI_PROVIDER') ?: 'mock'; // 'openai' | 'mock'
+        $this->apiKey   = getenv('PLANWISE_OPENAI_API_KEY') ?: null;
+        $this->model    = getenv('PLANWISE_OPENAI_MODEL') ?: 'gpt-4o-mini';
+        $this->timeout  = (int)(getenv('PLANWISE_AI_TIMEOUT') ?: 30);
+    }
+
+    public static function stepsMap(): array {
+        return [
+            'market_analysis'      => '市场环境分析',
+            'competitor_research'  => '竞争对手研究',
+            'user_persona'         => '目标用户画像',
+            'business_model'       => '商业模式设计',
+            'risk_assessment'      => '风险评估',
+            'financial_forecast'   => '财务预测',
+            'marketing_strategy'   => '营销策略',
+            'implementation_plan'  => '实施计划'
+        ];
+    }
+
+    public function buildPrompt(string $stepKey, string $idea, ?string $industry, string $depth, ?string $previous = null): string {
+        $depthHint = [
+            'basic'    => '请以简明扼要、要点式输出，300-500字。',
+            'standard' => '请以结构化小节输出，含要点与简述，600-900字。',
+            'deep'     => '请进行深入分析，包含数据假设与可操作建议，1200字以上。'
+        ][$depth] ?? '请结构化输出。';
+
+        $title = self::stepsMap()[$stepKey] ?? '分析';
+        $ind   = $industry ? "行业：{$industry}。" : '';
+        $prev  = $previous ? "以下为上一步结果，可在其基础上深化：\n{$previous}\n" : '';
+
+        return <<<TXT
+你是一名资深商业分析师。当前任务：{$title}
+背景：
+- 创业想法：{$idea}
+- {$ind}
+
+{$prev}
+请基于专业框架给出条理清晰的分析结果，包含：
+- 关键洞察与依据
+- 对应的建议与行动项
+- 可量化的指标（如适用）
+{$depthHint}
+TXT;
+    }
+
+    public function analyze(string $stepKey, string $idea, ?string $industry, string $depth, ?string $previous = null): string {
+        $prompt = $this->buildPrompt($stepKey, $idea, $industry, $depth, $previous);
+        if ($this->provider === 'openai' && $this->apiKey) {
+            $resp = $this->callOpenAI($prompt);
+            if ($resp !== null) return $resp;
+        }
+        return $this->mockResult($stepKey, $idea, $industry, $depth);
+    }
+
+    private function callOpenAI(string $prompt): ?string {
+        $url = 'https://api.openai.com/v1/chat/completions';
+        $payload = [
+            'model' => $this->model,
+            'messages' => [
+                ['role' => 'system', 'content' => '你是资深商业分析师，擅长结构化策略输出。'],
+                ['role' => 'user',   'content' => $prompt],
+            ],
+            'temperature' => 0.3,
+            'max_tokens' => 1200,
+        ];
+
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST           => true,
+            CURLOPT_HTTPHEADER     => [
+                'Content-Type: application/json',
+                'Authorization: Bearer ' . $this->apiKey,
+            ],
+            CURLOPT_POSTFIELDS     => json_encode($payload, JSON_UNESCAPED_UNICODE),
+            CURLOPT_TIMEOUT        => $this->timeout,
+        ]);
+        $raw = curl_exec($ch);
+        $err = curl_error($ch);
+        $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($raw === false || $code >= 400) {
+            error_log('[PlanWise] OpenAI error: ' . ($err ?: ('HTTP ' . $code)));
+            return null;
+        }
+        $data = json_decode($raw, true);
+        if (!is_array($data) || empty($data['choices'][0]['message']['content'])) return null;
+        return trim((string)$data['choices'][0]['message']['content']);
+    }
+
+    private function mockResult(string $stepKey, string $idea, ?string $industry, string $depth): string {
+        $title = self::stepsMap()[$stepKey] ?? '分析';
+        $depthNote = ['basic'=>'(基础版)','standard'=>'(标准版)','deep'=>'(深度版)'][$depth] ?? '';
+        $ind = $industry ? "所属行业：{$industry}。" : '';
+        return "# {$title}{$depthNote}\n" .
+               "- 背景：" . $idea . "\n" .
+               ($ind ? "- {$ind}\n" : '') .
+               "- 关键洞察：示例洞察1、示例洞察2。\n" .
+               "- 建议与行动：建议A、建议B、建议C（示例）。\n" .
+               "- 指标：一种或多种可量化KPI（示例）。\n" .
+               "\n(当前为无密钥环境的演示内容，配置环境变量以启用真实LLM。)";
+    }
+}
+?>

@@ -1,0 +1,307 @@
+<?php
+// PlanWise Header - 与主站blog.php风格完全同步
+?>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?php echo isset($page_title) ? $page_title . ' - ' : ''; ?>PlanWise - 麦青春的麦田</title>
+    <meta name="description" content="<?php echo isset($page_description) ? $page_description : 'PlanWise - AI驱动的商业策略分析平台，为您的商业想法提供专业的市场分析和策略建议 | 麦青春的麦田'; ?>">
+
+    <!-- Favicon: 使用主站的favicon -->
+    <link rel="icon" type="image/png" href="https://maxcaulfield.cn/favicon.png">
+    <link rel="shortcut icon" href="https://maxcaulfield.cn/favicon.png">
+    <link rel="apple-touch-icon" href="https://maxcaulfield.cn/favicon.png">
+    <meta name="theme-color" content="#0b0f19">
+    <meta name="msapplication-TileColor" content="#0b0f19">
+
+    <!-- Canonical -->
+    <link rel="canonical" href="<?php echo isset($canonical_url) ? $canonical_url : 'https://planwise.maxcaulfield.cn' . $_SERVER['REQUEST_URI']; ?>">
+
+    <!-- Open Graph / Twitter SEO -->
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="zh_CN">
+    <meta property="og:site_name" content="PlanWise - 麦青春的麦田">
+    <meta property="og:title" content="<?php echo isset($page_title) ? $page_title . ' - ' : ''; ?>PlanWise - 麦青春的麦田">
+    <meta property="og:description" content="<?php echo isset($page_description) ? $page_description : 'AI驱动的商业策略分析平台'; ?>">
+    <meta property="og:url" content="<?php echo isset($canonical_url) ? $canonical_url : 'https://planwise.maxcaulfield.cn' . $_SERVER['REQUEST_URI']; ?>">
+    <meta property="og:image" content="https://maxcaulfield.cn/images/avatar.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="author" content="麦青春">
+    <meta name="robots" content="index, follow">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "PlanWise",
+      "alternateName": "PlanWise AI Business Strategy Platform",
+      "url": "https://planwise.maxcaulfield.cn/",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "All",
+      "description": "AI驱动的商业策略分析平台，为您的商业想法提供专业的市场分析和策略建议"
+    }
+    </script>
+
+    <!-- 与主站相同的资源引用 -->
+    <script>
+      // Set production mode to suppress CDN warning
+      window.process = { env: { NODE_ENV: 'production' } };
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
+    <style>
+        /* === 与主站blog.php完全同步的CSS变量和样式 === */
+        :root {
+            /* 暗色主题变量 */
+            --bg-primary-dark: #0b0f19;
+            --bg-secondary-dark: rgba(17, 24, 39, 0.8);
+            --bg-glass-dark: rgba(31, 41, 55, 0.6);
+            --text-primary-dark: #e5e7eb;
+            --text-secondary-dark: #9ca3af;
+            --text-accent-dark: #a7c7e7;
+            --border-color-dark: rgba(55, 65, 81, 0.5);
+            --glow-color-dark: rgba(173, 216, 230, 0.7);
+            
+            /* 亮色主题变量 */
+            --bg-primary-light: #ffffff;
+            --bg-secondary-light: rgba(249, 250, 251, 0.9);
+            --bg-glass-light: rgba(255, 255, 255, 0.8);
+            --text-primary-light: #1f2937;
+            --text-secondary-light: #6b7280;
+            --text-accent-light: #2563eb;
+            --border-color-light: rgba(209, 213, 219, 0.8);
+            --glow-color-light: rgba(37, 99, 235, 0.6);
+            
+            /* 默认为暗色主题 */
+            --bg-primary: var(--bg-primary-dark);
+            --bg-secondary: var(--bg-secondary-dark);
+            --bg-glass: var(--bg-glass-dark);
+            --text-primary: var(--text-primary-dark);
+            --text-secondary: var(--text-secondary-dark);
+            --text-accent: var(--text-accent-dark);
+            --border-color: var(--border-color-dark);
+            --glow-color: var(--glow-color-dark);
+        }
+        
+        /* 亮色主题覆盖 */
+        .light-theme {
+            --bg-primary: var(--bg-primary-light);
+            --bg-secondary: var(--bg-secondary-light);
+            --bg-glass: var(--bg-glass-light);
+            --text-primary: var(--text-primary-light);
+            --text-secondary: var(--text-secondary-light);
+            --text-accent: var(--text-accent-light);
+            --border-color: var(--border-color-light);
+            --glow-color: var(--glow-color-light);
+        }
+        
+        /* 基础样式 */
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        
+        /* 毛玻璃效果 - 与主站完全一致 */
+        .glass-effect {
+            background-color: var(--bg-glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* 文本渐变 */
+        .text-gradient {
+            background-image: linear-gradient(to right, var(--text-accent), var(--glow-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        /* 导航链接样式 */
+        .nav-link {
+            color: var(--text-accent);
+            text-decoration: none;
+            position: relative;
+            transition: color 0.3s ease;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: var(--text-primary);
+            background-color: var(--bg-secondary);
+        }
+
+        /* 按钮样式 */
+        .cta-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1.5rem;
+            background-color: var(--text-accent);
+            color: var(--bg-primary);
+            border-radius: 0.5rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border: 1px solid var(--text-accent);
+        }
+        .cta-button:hover {
+            background-color: transparent;
+            color: var(--text-accent);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        /* 卡片样式 */
+        .dashboard-card {
+            background-color: var(--bg-glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        .dashboard-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            border-color: var(--glow-color);
+        }
+
+        /* 表单输入样式 */
+        .form-input {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            color: var(--text-primary);
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: var(--text-accent);
+            box-shadow: 0 0 0 3px rgba(167, 199, 231, 0.1);
+            background-color: var(--bg-glass);
+        }
+
+        /* 响应式隐藏/显示动画 */
+        .reveal {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* 头部导航样式 */
+        #navbar {
+            background-color: var(--bg-primary);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        /* 滚动条样式 */
+        ::-webkit-scrollbar { 
+            width: 8px; 
+        }
+        ::-webkit-scrollbar-track { 
+            background: var(--bg-primary); 
+        }
+        ::-webkit-scrollbar-thumb { 
+            background-color: var(--text-accent);
+            border-radius: 10px; 
+            border: 2px solid var(--bg-primary);
+        }
+        ::-webkit-scrollbar-thumb:hover { 
+            background-color: var(--glow-color);
+        }
+    </style>
+    
+    <link rel="stylesheet" href="/assets/css/planwise.css">
+</head>
+<body class="text-gray-200">
+
+    <!-- 导航栏 -->
+    <nav id="navbar" class="fixed w-full z-20 top-0 transition duration-300 ease-in-out">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="/" class="text-2xl font-bold hover:text-gray-300 transition duration-300" style="color: var(--text-primary);">
+                <i class="fas fa-brain mr-2" style="color: var(--text-accent);"></i>
+                PlanWise
+            </a>
+
+            <div class="hidden md:flex items-center space-x-2">
+                <a href="/" class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'index.php' ? 'active' : ''; ?>">首页</a>
+                <?php if (is_logged_in()): ?>
+                    <a href="/dashboard.php" class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'dashboard.php' ? 'active' : ''; ?>">控制台</a>
+                    <a href="/report.php" class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'report.php' ? 'active' : ''; ?>">创建报告</a>
+                    <a href="https://maxcaulfield.cn/logout.php" class="nav-link">退出登录</a>
+                <?php else: ?>
+                    <a href="/login.php" class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'login.php' ? 'active' : ''; ?>">登录</a>
+                    <a href="/register.php" class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'register.php' ? 'active' : ''; ?>">注册</a>
+                <?php endif; ?>
+                <a href="https://maxcaulfield.cn" class="nav-link">主站</a>
+            </div>
+
+            <div class="md:hidden flex items-center">
+                <button id="mobile-menu-button" aria-label="Toggle mobile menu" aria-expanded="false" class="p-2 rounded hover:bg-gray-700 transition ml-2" style="color: var(--text-secondary);">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- 移动端菜单 -->
+        <div id="mobile-menu" class="md:hidden hidden" style="background-color: var(--bg-secondary); backdrop-filter: blur(12px);">
+            <a href="/" class="block py-3 px-4 text-sm transition duration-150" style="color: var(--text-accent);" onmouseover="this.style.color='var(--text-primary)'; this.style.backgroundColor='var(--bg-glass)';" onmouseout="this.style.color='var(--text-accent)'; this.style.backgroundColor='transparent';">首页</a>
+            <?php if (is_logged_in()): ?>
+                <a href="/dashboard.php" class="block py-3 px-4 text-sm transition duration-150" style="color: var(--text-accent);" onmouseover="this.style.color='var(--text-primary)'; this.style.backgroundColor='var(--bg-glass)';" onmouseout="this.style.color='var(--text-accent)'; this.style.backgroundColor='transparent';">控制台</a>
+                <a href="/report.php" class="block py-3 px-4 text-sm transition duration-150" style="color: var(--text-accent);" onmouseover="this.style.color='var(--text-primary)'; this.style.backgroundColor='var(--bg-glass)';" onmouseout="this.style.color='var(--text-accent)'; this.style.backgroundColor='transparent';">创建报告</a>
+                <a href="https://maxcaulfield.cn/logout.php" class="block py-3 px-4 text-sm transition duration-150" style="color: var(--text-accent);" onmouseover="this.style.color='var(--text-primary)'; this.style.backgroundColor='var(--bg-glass)';" onmouseout="this.style.color='var(--text-accent)'; this.style.backgroundColor='transparent';">退出登录</a>
+            <?php else: ?>
+                <a href="/login.php" class="block py-3 px-4 text-sm transition duration-150" style="color: var(--text-accent);" onmouseover="this.style.color='var(--text-primary)'; this.style.backgroundColor='var(--bg-glass)';" onmouseout="this.style.color='var(--text-accent)'; this.style.backgroundColor='transparent';">登录</a>
+                <a href="/register.php" class="block py-3 px-4 text-sm transition duration-150" style="color: var(--text-accent);" onmouseover="this.style.color='var(--text-primary)'; this.style.backgroundColor='var(--bg-glass)';" onmouseout="this.style.color='var(--text-accent)'; this.style.backgroundColor='transparent';">注册</a>
+            <?php endif; ?>
+            <a href="https://maxcaulfield.cn" class="block py-3 px-4 text-sm transition duration-150" style="color: var(--text-accent);" onmouseover="this.style.color='var(--text-primary)'; this.style.backgroundColor='var(--bg-glass)';" onmouseout="this.style.color='var(--text-accent)'; this.style.backgroundColor='transparent';">主站</a>
+        </div>
+    </nav>
+
+    <?php if (isset($breadcrumbs) && !empty($breadcrumbs)): ?>
+    <!-- 面包屑导航 -->
+    <nav class="pt-20 pb-6 relative z-10">
+        <div class="max-w-6xl mx-auto px-4">
+            <ol class="flex flex-wrap items-center space-x-2 text-sm glass-effect p-3">
+                <li><a href="https://maxcaulfield.cn" class="hover:opacity-80 transition" style="color: var(--text-accent);">主站</a></li>
+                <li><i class="fas fa-chevron-right text-xs" style="color: var(--text-secondary);"></i></li>
+                <li><a href="/" class="hover:opacity-80 transition" style="color: var(--text-accent);">PlanWise</a></li>
+                <?php foreach ($breadcrumbs as $url => $title): ?>
+                    <li><i class="fas fa-chevron-right text-xs" style="color: var(--text-secondary);"></i></li>
+                    <?php if (is_numeric($url)): ?>
+                        <li style="color: var(--text-secondary);"><?= htmlspecialchars($title) ?></li>
+                    <?php else: ?>
+                        <li><a href="<?= htmlspecialchars($url) ?>" class="hover:opacity-80 transition" style="color: var(--text-accent);"><?= htmlspecialchars($title) ?></a></li>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+            </ol>
+        </div>
+    </nav>
+    <?php else: ?>
+    <!-- 默认间距，避免内容被固定导航栏覆盖 -->
+    <div class="pt-20"></div>
+    <?php endif; ?>
+
+    <!-- 主内容区域开始 -->
+    <main class="relative z-10">

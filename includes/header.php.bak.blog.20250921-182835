@@ -1,0 +1,343 @@
+<?php
+// PlanWise Header - 与主站风格同步的生产环境优化版本
+?>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?php echo isset($page_title) ? $page_title . ' - ' : ''; ?>PlanWise - 麦青春的麦田</title>
+    <meta name="description" content="<?php echo isset($page_description) ? $page_description : 'PlanWise - AI驱动的商业策略分析平台，为您的商业想法提供专业的市场分析和策略建议 | 麦青春的麦田'; ?>">
+
+    <!-- Favicon: 使用主站的favicon -->
+    <link rel="icon" type="image/png" href="https://maxcaulfield.cn/favicon.png">
+    <link rel="shortcut icon" href="https://maxcaulfield.cn/favicon.png">
+    <link rel="apple-touch-icon" href="https://maxcaulfield.cn/favicon.png">
+    <meta name="theme-color" content="#0b0f19">
+    <meta name="msapplication-TileColor" content="#0b0f19">
+
+    <!-- Canonical -->
+    <link rel="canonical" href="<?php echo isset($canonical_url) ? $canonical_url : 'https://planwise.maxcaulfield.cn' . $_SERVER['REQUEST_URI']; ?>">
+
+    <!-- Open Graph / Twitter SEO -->
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="zh_CN">
+    <meta property="og:site_name" content="PlanWise - 麦青春的麦田">
+    <meta property="og:title" content="<?php echo isset($page_title) ? $page_title . ' - ' : ''; ?>PlanWise - 麦青春的麦田">
+    <meta property="og:description" content="<?php echo isset($page_description) ? $page_description : 'AI驱动的商业策略分析平台'; ?>">
+    <meta property="og:url" content="<?php echo isset($canonical_url) ? $canonical_url : 'https://planwise.maxcaulfield.cn' . $_SERVER['REQUEST_URI']; ?>">
+    <meta property="og:image" content="https://maxcaulfield.cn/images/avatar.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="author" content="麦青春">
+    <meta name="robots" content="index, follow">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "PlanWise",
+      "alternateName": "PlanWise AI Business Strategy Platform",
+      "url": "https://planwise.maxcaulfield.cn/",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "All",
+      "description": "AI驱动的商业策略分析平台，为您的商业想法提供专业的市场分析和策略建议"
+    }
+    </script>
+
+    <!-- 与主站相同的资源引用 -->
+    <script>
+      // Set production mode to suppress CDN warning
+      window.process = { env: { NODE_ENV: 'production' } };
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://cdn.jsdelivr.net/npm/tsparticles@2.12.0/tsparticles.bundle.min.js"></script>
+    <link rel="stylesheet" href="/assets/css/planwise.css">
+    
+    <style>
+        /* --- 星空主题色彩配置（与主站同步） --- */
+        :root {
+            --glow-color: rgba(173, 216, 230, 0.7); /* Light Blue */
+            --sky-dark: #0b0f19; /* Very dark blue/black */
+            --sky-mid: #191970; /* Midnight Blue */
+            --sky-purple: #483d8b; /* Dark Slate Blue / Purple */
+            --star-bright: #FFFFFF;
+            --star-soft: #ADD8E6; /* Light Blue */
+            --star-pale: #F0F8FF; /* Alice Blue */
+            --accent-link: #a7c7e7;
+            --accent-button: #60a5fa; /* Brighter blue for button */
+            --button-hover-fill: #E0E0E0;
+            --button-hover-text: #111827;
+            --text-secondary-dark: #9ca3af;
+            --text-primary-dark: #e5e7eb;
+            /* Define a smoother easing function */
+            --ease-out-smooth: cubic-bezier(0.25, 0.1, 0.25, 1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--sky-dark); /* Base dark color */
+            color: #e5e7eb;
+            overflow-x: hidden;
+            position: relative; /* Needed for pseudo-element */
+        }
+
+        /* 与主站相同的渐变背景 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient( /* Blue, Purple, Green, Cyan gradient */
+                -45deg,
+                #2563eb, /* Blue */
+                #7c3aed, /* Purple */
+                #16a34a, /* Green */
+                #0891b2, /* Cyan */
+                #4f46e5, /* Indigo */
+                #c026d3, /* Fuchsia */
+                #2563eb /* Repeat first color for smoother loop */
+            );
+            background-size: 400% 400%; /* Make size larger for smoother flow */
+            animation: gradient-flow 25s linear infinite; /* Use linear timing, longer duration */
+            z-index: -2; /* Behind particles */
+            opacity: 0.7; /* Adjust opacity as desired */
+        }
+
+        /* Updated keyframes for single direction loop */
+        @keyframes gradient-flow {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
+        }
+
+        /* 毛玻璃效果 */
+        .glass-effect { 
+            background-color: rgba(31, 41, 55, 0.8); 
+            backdrop-filter: blur(12px); 
+            border: 1px solid rgba(55, 65, 81, 0.5); 
+            border-radius: 0.5rem; 
+            transition: background-color 0.3s ease, border-color 0.3s ease; 
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); 
+        }
+
+        /* CTA按钮样式（与主站同步） */
+        .cta-button {
+            position: relative; overflow: hidden; z-index: 1;
+            transition: color 0.4s var(--ease-out-smooth), transform 0.4s var(--ease-out-smooth), box-shadow 0.4s var(--ease-out-smooth), background-color 0.4s var(--ease-out-smooth), border-color 0.4s var(--ease-out-smooth);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            background-color: var(--accent-button);
+            border-color: var(--accent-button);
+            color: var(--star-bright);
+            padding: 0.75rem 2rem;
+            border-radius: 9999px;
+            border-width: 2px;
+            font-weight: 600;
+            display: inline-block;
+            min-width: 150px; 
+            text-align: center;
+        }
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3), 0 0 15px var(--glow-color);
+            background-color: transparent;
+            border-color: var(--glow-color);
+            color: var(--star-bright);
+        }
+
+        /* 导航链接样式 */
+        .nav-link {
+            color: var(--accent-link);
+            text-decoration: none;
+            position: relative;
+            transition: color 0.4s var(--ease-out-smooth);
+        }
+        .nav-link:hover, .nav-link.active {
+            color: var(--star-bright);
+        }
+        .nav-link::after {
+            content: ''; 
+            position: absolute; 
+            width: 0; 
+            height: 2px;
+            bottom: -5px; 
+            left: 50%; 
+            transform: translateX(-50%);
+            background-color: var(--glow-color);
+            transition: width 0.4s var(--ease-out-smooth), box-shadow 0.4s var(--ease-out-smooth);
+            box-shadow: 0 0 8px var(--glow-color);
+        }
+        .nav-link:hover::after, .nav-link.active::after { 
+            width: 100%; 
+        }
+
+        .nav-link-button { /* 用于导航栏中模拟链接样式的按钮 */
+            background: none;
+            border: none;
+            padding: 0;
+            font: inherit;
+            color: var(--accent-link);
+            cursor: pointer;
+            position: relative;
+            transition: color 0.4s var(--ease-out-smooth);
+        }
+        .nav-link-button:hover {
+            color: var(--star-bright);
+        }
+        .nav-link-button::after { /* 下划线效果 */
+            content: ''; position: absolute; width: 0; height: 2px;
+            bottom: -5px; left: 50%; transform: translateX(-50%);
+            background-color: var(--glow-color);
+            transition: width 0.4s var(--ease-out-smooth), box-shadow 0.4s var(--ease-out-smooth);
+            box-shadow: 0 0 8px var(--glow-color);
+        }
+        .nav-link-button:hover::after, .nav-link-button.active::after { width: 100%; }
+
+        /* 下拉菜单样式 */
+        #lang-dropdown a, #blog-nav-dropdown a { color: var(--text-secondary-dark, #9ca3af); }
+        #lang-dropdown a:hover, #blog-nav-dropdown a:hover { 
+            background-color: rgba(55, 65, 81, 0.6); 
+            color: var(--text-primary-dark, #e5e7eb); 
+        }
+
+        /* 移动端下拉菜单背景 */
+        #mobile-lang-dropdown, #mobile-blog-dropdown { background-color: rgba(31, 41, 55, 0.9); }
+        #mobile-lang-dropdown a, #mobile-blog-dropdown a { color: var(--accent-link, #a7c7e7); }
+        #mobile-lang-dropdown a:hover, #mobile-blog-dropdown a:hover { 
+            background-color: #374151; 
+            color: var(--star-bright, #FFF); 
+        }
+
+        /* 滚动条样式 */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { 
+            background-color: var(--accent-link); 
+            border-radius: 10px; 
+            border: 2px solid #0f172a; 
+        }
+        ::-webkit-scrollbar-thumb:hover { 
+            background-color: var(--star-soft); 
+            box-shadow: 0 0 10px var(--glow-color); 
+        }
+
+        /* 卡片样式优化 */
+        .dashboard-card {
+            background-color: rgba(31, 41, 55, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(55, 65, 81, 0.5);
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s var(--ease-out-smooth);
+        }
+        .dashboard-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2), 0 0 15px var(--glow-color);
+            border-color: var(--glow-color);
+        }
+
+        /* 表单样式优化 */
+        .form-input {
+            background-color: rgba(31, 41, 55, 0.6);
+            border: 1px solid rgba(55, 65, 81, 0.5);
+            border-radius: 0.5rem;
+            color: var(--text-primary-dark);
+            padding: 0.75rem 1rem;
+            transition: all 0.3s var(--ease-out-smooth);
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent-button);
+            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+            background-color: rgba(31, 41, 55, 0.8);
+        }
+
+        /* 响应式隐藏/显示 */
+        .reveal {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s var(--ease-out-smooth), transform 0.6s var(--ease-out-smooth);
+        }
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body class="text-gray-200">
+
+    <!-- 粒子背景 -->
+    <div id="tsparticles"></div>
+
+    <!-- 导航栏 -->
+    <nav id="navbar" class="fixed w-full z-20 top-0 transition duration-300 ease-in-out">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="/" class="text-2xl font-bold text-white hover:text-gray-300 transition duration-300">
+                <i class="fas fa-brain mr-2" style="color: var(--accent-button);"></i>
+                PlanWise
+            </a>
+
+            <div class="hidden md:flex items-center space-x-6">
+                <a href="/" class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'index.php' ? 'active' : ''; ?>">首页</a>
+                <?php if (is_logged_in()): ?>
+                    <a href="/dashboard.php" class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'dashboard.php' ? 'active' : ''; ?>">控制台</a>
+                    <a href="/report.php" class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'report.php' ? 'active' : ''; ?>">创建报告</a>
+                    <a href="https://maxcaulfield.cn/logout.php" class="nav-link">退出登录</a>
+                <?php else: ?>
+                    <a href="/login.php" class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'login.php' ? 'active' : ''; ?>">登录</a>
+                    <a href="/register.php" class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'register.php' ? 'active' : ''; ?>">注册</a>
+                <?php endif; ?>
+                <a href="https://maxcaulfield.cn" class="nav-link">主站</a>
+            </div>
+
+            <div class="md:hidden flex items-center">
+                <button id="mobile-menu-button" aria-label="Toggle mobile menu" aria-expanded="false" class="text-gray-200 focus:outline-none p-2 rounded hover:bg-gray-700 transition ml-2">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- 移动端菜单 -->
+        <div id="mobile-menu" class="md:hidden hidden bg-opacity-95 backdrop-blur-sm" style="background-color: rgba(11, 15, 25, 0.9);">
+            <a href="/" class="block py-3 px-4 text-sm text-[var(--accent-link)] hover:text-[var(--star-bright)] hover:bg-gray-700 transition duration-150">首页</a>
+            <?php if (is_logged_in()): ?>
+                <a href="/dashboard.php" class="block py-3 px-4 text-sm text-[var(--accent-link)] hover:text-[var(--star-bright)] hover:bg-gray-700 transition duration-150">控制台</a>
+                <a href="/report.php" class="block py-3 px-4 text-sm text-[var(--accent-link)] hover:text-[var(--star-bright)] hover:bg-gray-700 transition duration-150">创建报告</a>
+                <a href="https://maxcaulfield.cn/logout.php" class="block py-3 px-4 text-sm text-[var(--accent-link)] hover:text-[var(--star-bright)] hover:bg-gray-700 transition duration-150">退出登录</a>
+            <?php else: ?>
+                <a href="/login.php" class="block py-3 px-4 text-sm text-[var(--accent-link)] hover:text-[var(--star-bright)] hover:bg-gray-700 transition duration-150">登录</a>
+                <a href="/register.php" class="block py-3 px-4 text-sm text-[var(--accent-link)] hover:text-[var(--star-bright)] hover:bg-gray-700 transition duration-150">注册</a>
+            <?php endif; ?>
+            <a href="https://maxcaulfield.cn" class="block py-3 px-4 text-sm text-[var(--accent-link)] hover:text-[var(--star-bright)] hover:bg-gray-700 transition duration-150">主站</a>
+        </div>
+    </nav>
+
+    <?php if (isset($breadcrumbs) && !empty($breadcrumbs)): ?>
+    <!-- 面包屑导航 -->
+    <nav class="pt-20 pb-6 relative z-10">
+        <div class="max-w-6xl mx-auto px-4">
+            <ol class="flex flex-wrap items-center space-x-2 text-sm glass-effect p-3">
+                <li><a href="https://maxcaulfield.cn" class="hover:text-white transition" style="color: var(--accent-link);">主站</a></li>
+                <li><i class="fas fa-chevron-right text-xs text-gray-500"></i></li>
+                <li><a href="/" class="hover:text-white transition" style="color: var(--accent-link);">PlanWise</a></li>
+                <?php foreach ($breadcrumbs as $url => $title): ?>
+                    <li><i class="fas fa-chevron-right text-xs text-gray-500"></i></li>
+                    <?php if (is_numeric($url)): ?>
+                        <li class="text-gray-400"><?= htmlspecialchars($title) ?></li>
+                    <?php else: ?>
+                        <li><a href="<?= htmlspecialchars($url) ?>" class="hover:text-white transition" style="color: var(--accent-link);"><?= htmlspecialchars($title) ?></a></li>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+            </ol>
+        </div>
+    </nav>
+    <?php else: ?>
+    <!-- 默认间距，避免内容被固定导航栏覆盖 -->
+    <div class="pt-20"></div>
+    <?php endif; ?>
+
+    <!-- 主内容区域开始 -->
+    <main class="relative z-10">

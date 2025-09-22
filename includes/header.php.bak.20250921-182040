@@ -1,0 +1,193 @@
+<?php
+// PlanWise Header - 生产环境优化版本
+?>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?php echo isset($page_title) ? $page_title . ' - ' : ''; ?>PlanWise - 麦青春的麦田</title>
+    <meta name="description" content="<?php echo isset($page_description) ? $page_description : 'PlanWise - AI驱动的商业策略分析平台，为您的商业想法提供专业的市场分析和策略建议 | 麦青春的麦田'; ?>">
+
+    <!-- Favicon: 使用主站的favicon -->
+    <link rel="icon" type="image/png" href="https://maxcaulfield.cn/favicon.png">
+    <link rel="shortcut icon" href="https://maxcaulfield.cn/favicon.png">
+    <link rel="apple-touch-icon" href="https://maxcaulfield.cn/favicon.png">
+    <meta name="theme-color" content="#0b0f19">
+    <meta name="msapplication-TileColor" content="#0b0f19">
+
+    <!-- Canonical -->
+    <link rel="canonical" href="<?php echo isset($canonical_url) ? $canonical_url : 'https://planwise.maxcaulfield.cn' . $_SERVER['REQUEST_URI']; ?>">
+
+    <!-- Open Graph / Twitter SEO -->
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="zh_CN">
+    <meta property="og:site_name" content="PlanWise - 麦青春的麦田">
+    <meta property="og:title" content="<?php echo isset($page_title) ? $page_title . ' - ' : ''; ?>PlanWise - 麦青春的麦田">
+    <meta property="og:description" content="<?php echo isset($page_description) ? $page_description : 'AI驱动的商业策略分析平台'; ?>">
+    <meta property="og:url" content="<?php echo isset($canonical_url) ? $canonical_url : 'https://planwise.maxcaulfield.cn' . $_SERVER['REQUEST_URI']; ?>">
+    <meta property="og:image" content="https://maxcaulfield.cn/images/avatar.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="<?php echo isset($page_title) ? $page_title . ' - ' : ''; ?>PlanWise - 麦青春的麦田">
+    <meta name="twitter:description" content="<?php echo isset($page_description) ? $page_description : 'AI驱动的商业策略分析平台'; ?>">
+    <meta name="twitter:image" content="https://maxcaulfield.cn/images/avatar.jpg">
+    <meta name="author" content="麦青春">
+    <meta name="robots" content="index, follow">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "PlanWise - 麦青春的麦田",
+      "alternateName": "PlanWise - Max's Wheat Field",
+      "url": "https://planwise.maxcaulfield.cn/"
+    }
+    </script>
+
+    <!-- 生产环境CSS - 本地文件 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <script src="https://cdn.jsdelivr.net/npm/tsparticles@2.12.0/tsparticles.bundle.min.js"></script>
+    
+    <!-- 本地CSS文件 -->
+    <link rel="stylesheet" href="/assets/css/tailwind-production.css">
+    
+    <style>
+        /* 页面特定样式 */
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            padding: 1rem 2rem;
+            background-color: var(--accent-button);
+            color: white;
+            font-weight: 600;
+            border-radius: 0.5rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .btn-primary:hover {
+            background-color: #3b82f6;
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            padding: 1rem 2rem;
+            background-color: rgb(55, 65, 81);
+            color: white;
+            font-weight: 600;
+            border-radius: 0.5rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .btn-secondary:hover {
+            background-color: rgb(75, 85, 99);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+
+<body class="text-gray-200">
+
+    <div id="tsparticles"></div>
+
+    <nav id="navbar" class="fixed w-full z-20 top-0 transition duration-300 ease-in-out">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="https://maxcaulfield.cn" class="text-2xl font-bold text-white hover:text-gray-300 transition duration-300">麦青春的麦田</a>
+
+            <div class="hidden md:flex items-center space-x-6">
+                <a href="https://maxcaulfield.cn" class="nav-link">主页</a>
+                <a href="https://about.maxcaulfield.cn" class="nav-link">关于我</a>
+                <a href="https://maxcaulfield.cn/blog.php" class="nav-link">博客</a>
+                <a href="https://maxcaulfield.cn/games.html" class="nav-link">小游戏</a>
+                
+                <div class="relative">
+                    <button id="planwise-toggle" aria-label="PlanWise menu" class="nav-link-button flex items-center">
+                        <i class="fas fa-lightbulb text-xl mr-1"></i> 
+                        <span class="text-sm font-medium">PlanWise</span> 
+                        <i class="fas fa-chevron-down text-xs ml-1"></i>
+                    </button>
+                    <div id="planwise-dropdown" class="absolute right-0 mt-2 w-48 rounded-md shadow-lg border hidden glass-effect z-30" style="padding: 0.25rem 0;">
+                        <a href="/introduction.php" class="block px-4 py-2 text-sm transition-colors">产品介绍</a>
+                        <a href="/dashboard.php" class="block px-4 py-2 text-sm transition-colors">我的控制台</a>
+                        <a href="/report.php" class="block px-4 py-2 text-sm transition-colors">创建报告</a>
+                        <?php if (!isset($_SESSION['user_id'])): ?>
+                        <div class="border-t border-gray-600" style="margin: 0.25rem 0;"></div>
+                        <a href="/login.php" class="block px-4 py-2 text-sm transition-colors">登录</a>
+                        <a href="/register.php" class="block px-4 py-2 text-sm transition-colors">注册</a>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                
+                <div class="relative">
+                    <button id="lang-toggle" aria-label="Change language" class="nav-link-button flex items-center">
+                        <i class="fas fa-language text-xl mr-1"></i> 
+                        <span id="current-lang" class="text-sm font-medium">中文</span> 
+                        <i class="fas fa-chevron-down text-xs ml-1"></i>
+                    </button>
+                    <div id="lang-dropdown" class="absolute right-0 mt-2 w-32 rounded-md shadow-lg border hidden glass-effect z-30" style="padding: 0.25rem 0;">
+                        <a href="#" class="block px-4 py-2 text-sm transition-colors" data-lang="zh-CN">简体中文</a>
+                        <a href="#" class="block px-4 py-2 text-sm transition-colors" data-lang="zh-TW">繁體中文</a>
+                        <a href="#" class="block px-4 py-2 text-sm transition-colors" data-lang="en">English</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="md:hidden flex items-center">
+                <button id="mobile-menu-button" aria-label="Toggle mobile menu" aria-expanded="false" class="text-gray-200 focus:outline-none p-2 rounded hover:bg-gray-700 transition ml-2">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                </button>
+            </div>
+        </div>
+
+        <div id="mobile-menu" class="md:hidden hidden bg-opacity-95" style="background-color: rgba(11, 15, 25, 0.9); backdrop-filter: blur(12px);">
+            <a href="https://maxcaulfield.cn" class="block py-3 px-4 text-sm hover:bg-gray-700 transition duration-150" style="color: var(--accent-link);">主页</a>
+            <a href="https://about.maxcaulfield.cn" class="block py-3 px-4 text-sm hover:bg-gray-700 transition duration-150" style="color: var(--accent-link);">关于我</a>
+            <a href="https://maxcaulfield.cn/blog.php" class="block py-3 px-4 text-sm hover:bg-gray-700 transition duration-150" style="color: var(--accent-link);">博客</a>
+            <a href="https://maxcaulfield.cn/games.html" class="block py-3 px-4 text-sm hover:bg-gray-700 transition duration-150" style="color: var(--accent-link);">小游戏</a>
+            <a href="/introduction.php" class="block py-3 px-4 text-sm hover:bg-gray-700 transition duration-150" style="color: var(--accent-link);">PlanWise</a>
+            <div class="px-4 pt-3 pb-2 border-t border-gray-700">
+                <button id="mobile-lang-toggle" aria-label="Change language" class="w-full flex justify-between items-center p-2 rounded hover:bg-gray-700 transition-colors text-gray-300 hover:text-white">
+                    <span class="flex items-center"> <i class="fas fa-language text-lg mr-2"></i> <span class="text-sm">选择语言</span> </span>
+                    <span id="mobile-current-lang" class="text-sm font-medium">中文</span>
+                </button>
+                <div id="mobile-lang-dropdown" class="mt-2 space-y-1 hidden rounded p-1" style="background-color: rgba(31, 41, 55, 0.8);">
+                    <a href="#" class="block px-3 py-1.5 text-sm rounded hover:bg-gray-700 transition-colors w-full text-left" data-lang="zh-CN">简体中文</a>
+                    <a href="#" class="block px-3 py-1.5 text-sm rounded hover:bg-gray-700 transition-colors w-full text-left" data-lang="zh-TW">繁體中文</a>
+                    <a href="#" class="block px-3 py-1.5 text-sm rounded hover:bg-gray-700 transition-colors w-full text-left" data-lang="en">English</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 面包屑导航 -->
+    <?php if (isset($breadcrumbs) && is_array($breadcrumbs)): ?>
+    <nav aria-label="breadcrumb" class="pt-24 pb-4" style="background-color: var(--sky-dark); background-opacity: 0.8;">
+        <div class="container mx-auto px-6">
+            <ol class="flex items-center space-x-2 text-sm">
+                <li><a href="https://maxcaulfield.cn" class="hover:text-white transition" style="color: var(--accent-link);">麦青春的麦田</a></li>
+                <li><i class="fas fa-chevron-right text-xs text-gray-500"></i></li>
+                <li><a href="/" class="hover:text-white transition" style="color: var(--accent-link);">PlanWise</a></li>
+                <?php foreach ($breadcrumbs as $url => $title): ?>
+                    <li><i class="fas fa-chevron-right text-xs text-gray-500"></i></li>
+                    <?php if (is_numeric($url)): ?>
+                        <li class="text-gray-400"><?= htmlspecialchars($title) ?></li>
+                    <?php else: ?>
+                        <li><a href="<?= htmlspecialchars($url) ?>" class="hover:text-white transition" style="color: var(--accent-link);"><?= htmlspecialchars($title) ?></a></li>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+            </ol>
+        </div>
+    </nav>
+    <?php else: ?>
+    <!-- 默认间距，避免内容被固定导航栏覆盖 -->
+    <div class="pt-20"></div>
+    <?php endif; ?>
+
+    <!-- 主内容区域开始 -->
+    <main class="relative z-10">

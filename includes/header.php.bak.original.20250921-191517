@@ -1,0 +1,500 @@
+<?php
+// /www/wwwroot/maxcaulfield.cn/includes/header.php
+// --- FINAL VERSION: Restored scroll glass effect for the header ---
+
+if (session_status() == PHP_SESSION_NONE) { session_start(); }
+$pdo = null;
+if (function_exists('getPDO')) { $pdo = getPDO(); }
+require_once __DIR__ . '/avatar_helper.php';
+require_once __DIR__ . '/security_helper.php';
+require_once __DIR__ . '/seo_helper.php';
+// SDP封禁状态检查
+$current_script = basename($_SERVER["SCRIPT_NAME"] ?? "");
+if ($current_script !== "user_status.php" && isset($_SESSION["user_id"]) && $pdo) {
+    try {
+        $user_id = $_SESSION["user_id"];
+        
+        // 检查SDP封禁状态
+        $stmt_sdp_check = $pdo->prepare("SELECT sdp_ban_type, sdp_ban_reason FROM users WHERE id = ? AND sdp_ban_type IS NOT NULL AND sdp_ban_type != 'none'");
+        $stmt_sdp_check->execute([$user_id]);
+        $sdp_ban_info = $stmt_sdp_check->fetch(PDO::FETCH_ASSOC);
+        
+        if ($sdp_ban_info) {
+            // 用户被SDP封禁，重定向到用户状态页面
+            header('Location: https://maxcaulfield.cn/user_status.php');
+            exit;
+        }
+    } catch (PDOException $e) {
+        error_log("SDP ban check failed in header: " . $e->getMessage());
+    }
+}
+
+// 添加安全头
+add_security_headers();
+// 添加内容安全策略
+add_csp_header();
+// ... (All PHP logic for ban checks and notifications remains the same) ...
+if ($pdo) { 
+    $visitor_ip = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? 'UNKNOWN'; 
+    try { 
+        // Check single IP ban
+        $stmt_ip_ban_check = $pdo->prepare("SELECT id FROM banned_ips WHERE ip_address = ?"); 
+        $stmt_ip_ban_check->execute([$visitor_ip]); 
+        if ($stmt_ip_ban_check->fetch()) { 
+            header('Location: /ip_banned.php');
+            exit; 
+        } 
+        
+        // Check IP range ban
+        if ($pdo->query("SHOW TABLES LIKE 'banned_ip_ranges'")->rowCount() > 0) {
+            $stmt_ranges = $pdo->query("SELECT ip_range FROM banned_ip_ranges");
+            $banned_ranges = $stmt_ranges->fetchAll(PDO::FETCH_COLUMN);
+            
+            foreach ($banned_ranges as $range) {
+                if (strpos($range, '/') === false) {
+                    // Single IP
+                    if ($visitor_ip === $range) {
+                        header('Location: /ip_banned.php');
+                        exit;
+                    }
+                } else {
+                    // CIDR range
+                    list($subnet, $bits) = explode('/', $range);
+                    $ip_long = ip2long($visitor_ip);
+                    $subnet_long = ip2long($subnet);
+                    $mask = -1 << (32 - $bits);
+                    $subnet_long &= $mask;
+                    
+                    if (($ip_long & $mask) == $subnet_long) {
+                        header('Location: /ip_banned.php');
+                        exit;
+                    }
+                }
+            }
+        }
+    } catch (PDOException $e) { 
+        error_log("IP Ban Check Failed: " . $e->getMessage()); 
+    } 
+    
+    $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? ''; 
+    $request_uri = $_SERVER['REQUEST_URI'] ?? ''; 
+    if (!empty($user_agent) && !preg_match('/(bot|crawl|spider)/i', $user_agent) && !preg_match('/\.(css|js|jpg|jpeg|png|gif|ico|svg)$/i', $request_uri)) { 
+        try { 
+            $stmt_log_ip = $pdo->prepare("INSERT INTO visitor_ips (ip_address, user_id, last_seen_at, user_agent) VALUES (?, ?, NOW(), ?) ON DUPLICATE KEY UPDATE user_id = VALUES(user_id), last_seen_at = NOW(), user_agent = VALUES(user_agent)"); 
+            $current_user_id = $_SESSION['user_id'] ?? null; 
+            $stmt_log_ip->execute([$visitor_ip, $current_user_id, $user_agent]); 
+        } catch (PDOException $e) { 
+            error_log("IP Logging Failed: " . $e->getMessage()); 
+        } 
+    } 
+}
+if (isset($_SESSION['user_id']) && $pdo) { try { $stmt_ban_check = $pdo->prepare("SELECT is_banned, ban_expires_at, ban_reason FROM users WHERE id = ?"); $stmt_ban_check->execute([$_SESSION['user_id']]); if ($user_status = $stmt_ban_check->fetch(PDO::FETCH_ASSOC)) { $is_currently_banned = $user_status['is_banned'] == 1; if ($is_currently_banned && $user_status['ban_expires_at'] !== null && strtotime($user_status['ban_expires_at']) < time()) { $pdo->prepare("UPDATE users SET is_banned = 0, ban_expires_at = NULL, ban_reason = NULL WHERE id = ?")->execute([$_SESSION['user_id']]); $is_currently_banned = false; } if ($is_currently_banned) { $_SESSION = array(); if (ini_get("session.use_cookies")) { $params = session_get_cookie_params(); setcookie(session_name(), '', time() - 42000, $params["path"], $params["domain"], $params["secure"], $params["httponly"]); } session_destroy(); header('Location: /login.php?banned=1'); exit; } } } catch (PDOException $e) { error_log("Header ban check failed: " . $e->getMessage()); } }
+$total_unread_count = 0;
+$notifications_for_display = [];
+if (isset($_SESSION['user_id']) && $pdo) {
+    $user_id = $_SESSION['user_id'];
+    try {
+        // 联合查询，统一 is_read 状态 (0=未读, 1=已读)
+        $sql = "(
+            SELECT 
+                an.id, 
+                an.title as message, 
+                an.created_at, 
+                'admin' as type, 
+                COALESCE(uns.is_read, 0) as is_read
+            FROM admin_notifications an
+            LEFT JOIN user_notification_status uns ON an.id = uns.notification_id AND uns.user_id = :user_id_1
+        ) UNION ALL (
+            SELECT 
+                un.id, 
+                un.message, 
+                un.created_at, 
+                'user' as type, 
+                un.is_read
+            FROM user_notifications un
+            WHERE un.user_id = :user_id_2
+        ) ORDER BY created_at DESC LIMIT 10";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute(['user_id_1' => $user_id, 'user_id_2' => $user_id]);
+        $notifications_for_display = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // 修正未读消息总数计算
+        $total_unread_count = 0;
+        foreach ($notifications_for_display as $notification) {
+            if ($notification['is_read'] == 0) { // is_read = 0 表示未读
+                $total_unread_count++;
+            }
+        }
+
+    } catch (PDOException $e) {
+        error_log("Header notification query failed: " . $e->getMessage());
+    }
+}
+$page_actual_title = $page_actual_title ?? '麦青春的麦田';
+?>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?php echo htmlspecialchars($page_actual_title); ?></title>
+
+    <?php if (!empty($meta_description)): ?>
+        <meta name="description" content="<?php echo $meta_description; ?>">
+    <?php else: ?>
+        <meta name="description" content="欢迎来到麦青春的博客，这里是我用代码和爱浇灌的一片天地，分享关于技术探索、游戏评测、AI创作和生活中的奇思妙想。">
+    <?php endif; ?>
+
+    <?php if (!empty($meta_keywords)): ?>
+    <meta name="keywords" content="<?php echo $meta_keywords; ?>">
+    <?php else: ?>
+    <meta name="keywords" content="MaxCaulfield, 麦青春, 博客, 技术, 游戏, AI, 生活, 编程">
+    <?php endif; ?>
+
+    <?php // Robots 控制：默认 index,follow，可被页面覆盖 ?>
+    <meta name="robots" content="<?php echo isset($meta_robots) && $meta_robots !== '' ? htmlspecialchars($meta_robots) : 'index,follow'; ?>">
+    
+    <!-- SEO增强 -->
+    <?php if (!empty($canonical_url)): ?>
+    <?php echo generate_canonical_url($canonical_url); ?>
+    <?php endif; ?>
+    
+    <?php if (!empty($og_data)): ?>
+    <!-- Open Graph -->
+    <?php echo generate_og_tags($og_data); ?>
+    <?php endif; ?>
+    
+    <?php if (!empty($twitter_data)): ?>
+    <!-- Twitter Card -->
+    <?php echo generate_twitter_card($twitter_data); ?>
+    <?php endif; ?>
+    
+    <?php if (!empty($structured_data)): ?>
+    <!-- 结构化数据 -->
+    <?php echo $structured_data; ?>
+    <?php endif; ?>
+
+    <!-- 优化的资源加载 -->
+    <?php require_once __DIR__ . '/optimized_head.php'; ?>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    
+    <?php if (function_exists('generate_csrf_token')): ?>
+    <meta name="csrf-token" content="<?php echo safe_html(generate_csrf_token()); ?>">
+    <?php endif; ?>
+    
+    <script src="/js/ajax-helper.js"></script>
+    <script src="/js/cross-site-auth-sync.js"></script>
+    <style>
+        :root {
+            /* 暗色主题变量 */
+            --bg-primary-dark: #0b0f19;
+            --bg-secondary-dark: rgba(17, 24, 39, 0.8);
+            --bg-glass-dark: rgba(31, 41, 55, 0.6);
+            --text-primary-dark: #e5e7eb;
+            --text-secondary-dark: #9ca3af;
+            --text-accent-dark: #a7c7e7;
+            --border-color-dark: rgba(55, 65, 81, 0.5);
+            --glow-color-dark: rgba(173, 216, 230, 0.7);
+            
+            /* 亮色主题变量 */
+            --bg-primary-light: #ffffff;
+            --bg-secondary-light: rgba(249, 250, 251, 0.9);
+            --bg-glass-light: rgba(255, 255, 255, 0.8);
+            --text-primary-light: #1f2937;
+            --text-secondary-light: #6b7280;
+            --text-accent-light: #2563eb;
+            --border-color-light: rgba(209, 213, 219, 0.8);
+            --glow-color-light: rgba(37, 99, 235, 0.6);
+            
+            /* 默认为暗色主题 */
+            --bg-primary: var(--bg-primary-dark);
+            --bg-secondary: var(--bg-secondary-dark);
+            --bg-glass: var(--bg-glass-dark);
+            --text-primary: var(--text-primary-dark);
+            --text-secondary: var(--text-secondary-dark);
+            --text-accent: var(--text-accent-dark);
+            --border-color: var(--border-color-dark);
+            --glow-color: var(--glow-color-dark);
+        }
+        
+        /* 亮色主题覆盖 */
+        .light-theme {
+            --bg-primary: var(--bg-primary-light);
+            --bg-secondary: var(--bg-secondary-light);
+            --bg-glass: var(--bg-glass-light);
+            --text-primary: var(--text-primary-light);
+            --text-secondary: var(--text-secondary-light);
+            --text-accent: var(--text-accent-light);
+            --border-color: var(--border-color-light);
+            --glow-color: var(--glow-color-light);
+        }
+        
+        /* 基础样式 */
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        
+        .glass-effect {
+            background-color: var(--bg-glass);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+        }
+        
+        .text-gradient {
+            background-image: linear-gradient(to right, var(--text-accent), var(--glow-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        /* 头部样式 */
+        #main-header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        #main-header.scrolled {
+            background-color: var(--bg-glass);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        #main-header:not(.scrolled) {
+            background-color: transparent;
+            border-bottom: 1px solid transparent;
+        }
+        
+        #notification-dropdown {
+            display: none;
+            transform: translateY(-10px);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        
+        #notification-dropdown.show {
+            display: block;
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        /* 通知项样式美化 */
+        .notification-item {
+            transition: background-color 0.2s ease;
+        }
+        
+        .notification-item:hover {
+            background-color: rgba(55, 65, 81, 0.3);
+        }
+        
+        .notification-item.unread {
+            position: relative;
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+        
+        .notification-item.unread::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(to bottom, #3b82f6, #1d4ed8);
+            border-radius: 0 2px 2px 0;
+        }
+        
+        /* 主题切换按钮样式 */
+        #theme-toggle {
+            transition: all 0.3s ease;
+        }
+        
+        #theme-toggle:hover {
+            transform: scale(1.1);
+        }
+    </style>
+    <script>
+    // 立即应用保存的主题，避免闪烁
+    (function() {
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        // 在body还未加载时，先在html标签上设置类名
+        document.documentElement.classList.remove('light-theme', 'dark-theme');
+        document.documentElement.classList.add(savedTheme + '-theme');
+        
+        // 当body加载后，也设置body的类名
+        document.addEventListener('DOMContentLoaded', function() {
+            document.body.classList.remove('light-theme', 'dark-theme');
+            document.body.classList.add(savedTheme + '-theme');
+        });
+    })();
+    </script>
+</head>
+<body>
+    <header id="main-header" class="py-4">
+        <div class="container mx-auto px-6 flex justify-between items-center">
+            <a href="/index.html" class="text-2xl md:text-3xl font-bold"><span class="text-gradient">麦青春的麦田</span></a>
+            <div class="flex items-center space-x-2">
+                <a href="/blog.php" title="博客" class="p-2 rounded-full text-gray-400 hover:bg-gray-700/50"><i class="fas fa-home text-lg"></i></a>
+                <a href="https://music.maxcaulfield.cn" title="麦田の音符" class="p-2 rounded-full text-gray-400 hover:bg-gray-700/50">
+                    <i class="fas fa-music text-lg"></i>
+                </a>
+                
+                <?php if (isset($_SESSION['user_id'])) : ?>
+                    <a href="/security.php" title="安全中心" class="p-2 rounded-full text-gray-400 hover:bg-gray-700/50">
+                        <i class="fas fa-shield-alt text-lg"></i>
+                    </a>
+                    <div class="relative">
+                        <button id="notification-toggle" class="p-2 rounded-full text-gray-400 hover:bg-gray-700/50 relative">
+                            <i class="fas fa-bell text-lg"></i>
+                            <?php if ($total_unread_count > 0) : ?>
+                                <span id="notification-red-dot" class="absolute top-1 right-1 block h-2 w-2 rounded-full bg-red-500"></span>
+                            <?php endif; ?>
+                        </button>
+                        <div id="notification-dropdown" class="absolute right-0 mt-2 w-80 bg-gray-800/90 backdrop-blur-sm border border-gray-700 rounded-md shadow-lg z-30 hidden">
+                            <div class="p-3 font-semibold text-center border-b border-gray-700 text-white">通知中心</div>
+                            <div class="max-h-96 overflow-y-auto">
+                                <?php if (empty($notifications_for_display)) : ?>
+                                    <p class="text-center text-sm text-gray-400 py-4">暂无新通知</p>
+                                <?php else : foreach (array_slice($notifications_for_display, 0, 10) as $notif) : ?>
+                                <div class="p-3 border-b border-gray-700/50">
+                                    <p class="font-medium text-sm flex items-start <?php echo $notif['is_read'] ? 'text-gray-400' : 'text-white'; ?>">
+                                        <span class="w-6 text-center pt-0.5">
+                                            <?php if ($notif['type'] === 'user') { if (strpos($notif['message'], '被拒绝') !== false) { echo '<i class="fas fa-times-circle text-red-400 mr-2"></i>'; } else { echo '<i class="fas fa-user-check text-green-400 mr-2"></i>'; } } else { echo '<i class="fas fa-bullhorn text-blue-400 mr-2"></i>'; } ?>
+                                        </span>
+                                        <span><?php echo htmlspecialchars($notif['message']); ?></span>
+                                    </p>
+                                    <p class="text-xs mt-1 text-right <?php echo $notif['is_read'] ? 'text-gray-500' : 'text-gray-400'; ?>"><?php echo date('m-d H:i', strtotime($notif['created_at'])); ?></p>
+                                </div>
+                                <?php endforeach; endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                <?php endif; ?>
+                <button id="theme-toggle" aria-label="切换主题" class="p-2 rounded-full text-gray-400 hover:bg-gray-700/50"><i id="theme-toggle-icon" class="fas text-lg"></i></button>
+                <?php if (isset($_SESSION['user_id'])): ?>
+                    <?php $header_avatar_url = getEnhancedAvatarUrl($_SESSION['avatar'] ?? null, $_SESSION['display_name'] ?? $_SESSION['username'], null, 24, true); ?>
+                    <a href="/user_profile.php" title="个人资料" class="flex items-center p-1 rounded-full hover:bg-gray-700/50">
+                        <img src="<?php echo htmlspecialchars($header_avatar_url); ?>" alt="用户头像" class="w-6 h-6 rounded-full">
+                        <span class="hidden sm:inline ml-2 text-sm text-gray-300"><?php echo htmlspecialchars($_SESSION['display_name'] ?? $_SESSION['username']); ?></span>
+                    </a>
+                    <a href="/logout.php" title="登出" class="p-2 rounded-full text-gray-400 hover:bg-gray-700/50"><i class="fas fa-sign-out-alt text-lg"></i></a>
+                <?php else: ?>
+                    <a href="/login.php" title="登录" class="p-2 rounded-full text-gray-400 hover:bg-gray-700/50"><i class="fas fa-sign-in-alt text-lg"></i></a>
+                    <a href="/register.php" title="注册" class="p-2 rounded-full text-gray-400 hover:bg-gray-700/50"><i class="fas fa-user-plus text-lg"></i></a>
+                <?php endif; ?>
+            </div>
+        </div>
+    </header>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const themeToggle = document.getElementById('theme-toggle');
+        const notificationToggle = document.getElementById('notification-toggle');
+        const notificationDropdown = document.getElementById('notification-dropdown');
+        const notificationRedDot = document.getElementById('notification-red-dot');
+        
+        // --- FIX: Added header element and scroll listener ---
+        const header = document.getElementById('main-header');
+        if (header) {
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 30) {
+                    header.classList.add('scrolled');
+                } else {
+                    header.classList.remove('scrolled');
+                }
+            });
+        }
+        // --- END FIX ---
+
+        if (themeToggle) {
+            let currentTheme = localStorage.getItem('theme') || 'dark';
+            const iconEl = themeToggle.querySelector('#theme-toggle-icon') || themeToggle.querySelector('i');
+
+            function applyTheme(theme) {
+                // 移除所有主题类
+                document.body.classList.remove('light-theme', 'dark-theme');
+                document.documentElement.classList.remove('light-theme', 'dark-theme');
+
+                // 添加新的主题类
+                document.body.classList.add(theme + '-theme');
+                document.documentElement.classList.add(theme + '-theme');
+
+                // 更新图标显示（单图标切换类）
+                if (iconEl) {
+                    iconEl.classList.remove('fa-sun', 'fa-moon');
+                    iconEl.classList.add(theme === 'light' ? 'fa-sun' : 'fa-moon');
+                }
+
+                console.log('Theme applied:', theme);
+            }
+
+            // 立即应用主题
+            applyTheme(currentTheme);
+
+            themeToggle.addEventListener('click', () => {
+                currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                localStorage.setItem('theme', currentTheme);
+                applyTheme(currentTheme);
+            });
+        }
+
+        if (notificationToggle) {
+            notificationToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isVisible = notificationDropdown.classList.contains('show');
+                
+                if (isVisible) {
+                    // 隐藏下拉菜单
+                    notificationDropdown.classList.remove('show');
+                    setTimeout(() => {
+                        notificationDropdown.style.display = 'none';
+                    }, 300); // 等待动画完成
+                } else {
+                    // 显示下拉菜单
+                    notificationDropdown.style.display = 'block';
+                    // 强制重排以确保动画生效
+                    notificationDropdown.offsetHeight;
+                    notificationDropdown.classList.add('show');
+                    
+                    // 标记所有通知为已读
+                    if (notificationRedDot) {
+                        fetch('/ajax_mark_all_notifications_read.php', { method: 'POST' })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    notificationRedDot.style.display = 'none';
+                                    // 更新页面上的通知样式为已读状态
+                                    const notificationItems = notificationDropdown.querySelectorAll('.notification-item');
+                                    notificationItems.forEach(item => {
+                                        const textElement = item.querySelector('p');
+                                        const timeElement = item.querySelector('p:last-child');
+                                        if (textElement) textElement.className = textElement.className.replace('text-white', 'text-gray-400');
+                                        if (timeElement) timeElement.className = timeElement.className.replace('text-gray-400', 'text-gray-500');
+                                        item.classList.remove('unread');
+                                    });
+                                }
+                            })
+                            .catch(error => console.error('Error marking notifications as read:', error));
+                    }
+                }
+            });
+        }
+        
+        document.addEventListener('click', (e) => {
+            if (notificationDropdown && notificationDropdown.classList.contains('show')) {
+                if (!notificationToggle.contains(e.target) && !notificationDropdown.contains(e.target)) {
+                    notificationDropdown.classList.remove('show');
+                    setTimeout(() => {
+                        notificationDropdown.style.display = 'none';
+                    }, 300);
+                }
+            }
+        });
+    });
+    </script>

@@ -1,0 +1,232 @@
+<?php
+// PlanWise - 产品介绍页面
+require_once __DIR__ . '/db_connect.php';
+session_start();
+
+// 设置页面特定的变量
+$page_title = "产品介绍";
+$page_description = "PlanWise是一个AI驱动的商业策略分析平台，通过先进的人工智能技术，为您的商业想法提供专业的市场分析、竞争对手研究、用户画像构建等全方位策略建议。";
+$canonical_url = "https://planwise.maxcaulfield.cn/introduction.php";
+
+// 设置面包屑导航
+$breadcrumbs = [
+    '产品介绍'
+];
+
+// 如果用户已经登录，在面包屑中显示不同路径
+if (is_logged_in()) {
+    $breadcrumbs = [
+        '/dashboard.php' => '控制台',
+        '产品介绍'
+    ];
+}
+
+// 包含头部
+include __DIR__ . '/includes/header.php';
+?>
+
+<!-- Hero Section -->
+<section class="relative py-20 overflow-hidden" style="background: linear-gradient(135deg, var(--sky-dark) 0%, var(--sky-mid) 50%, var(--sky-purple) 100%);">
+    <div class="container mx-auto px-6 relative z-10">
+        <div class="text-center mb-16">
+            <div class="inline-flex items-center mb-6 px-4 py-2 bg-blue-500 bg-opacity-20 rounded-full border border-blue-400" style="border-color: rgba(96, 165, 250, 0.3);">
+                <i class="fas fa-lightbulb text-blue-300 mr-2"></i>
+                <span class="text-blue-200 text-sm font-medium">AI驱动的商业策略分析</span>
+            </div>
+            <h1 class="text-5xl md:text-6xl font-bold mb-6 text-white leading-tight">
+                让AI帮您制定
+                <span style="background: linear-gradient(to right, #60a5fa, #a855f7); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                    商业策略
+                </span>
+            </h1>
+            <p class="text-xl text-gray-300 mb-8 max-w-3xl mx-auto leading-relaxed">
+                PlanWise是一个革命性的AI商业策略分析平台，能够将您的商业想法转化为详细的市场分析报告和实施路线图。
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <?php if (is_logged_in()): ?>
+                    <a href="/report.php" class="btn-primary text-lg">
+                        <i class="fas fa-plus mr-2"></i>
+                        立即创建报告
+                    </a>
+                    <a href="/dashboard.php" class="btn-secondary text-lg">
+                        <i class="fas fa-tachometer-alt mr-2"></i>
+                        进入控制台
+                    </a>
+                <?php else: ?>
+                    <a href="/register.php" class="btn-primary text-lg">
+                        <i class="fas fa-rocket mr-2"></i>
+                        免费开始使用
+                    </a>
+                    <a href="#features" class="btn-secondary text-lg">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        了解更多功能
+                    </a>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 产品特色 -->
+<section id="features" class="py-20" style="background-color: var(--sky-dark);">
+    <div class="container mx-auto px-6">
+        <div class="text-center mb-16">
+            <h2 class="text-4xl font-bold text-white mb-6">核心功能特色</h2>
+            <p class="text-xl text-gray-300 max-w-3xl mx-auto">
+                从想法到实施，PlanWise为您提供全方位的AI商业分析支持
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- 功能卡片1 -->
+            <div class="glass-effect p-8 rounded-xl hover:bg-gray-700 transition-all duration-300 group" style="background-color: rgba(31, 41, 55, 0.8); backdrop-filter: blur(12px);">
+                <div class="w-16 h-16 bg-blue-500 bg-opacity-20 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                    <i class="fas fa-chart-line text-2xl text-blue-400"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-4">AI思考过程可视化</h3>
+                <p class="text-gray-300 leading-relaxed">
+                    实时展示AI分析思路，让您看到从市场分析到策略制定的完整思考链条，透明度百分百。
+                </p>
+            </div>
+
+            <!-- 功能卡片2 -->
+            <div class="glass-effect p-8 rounded-xl hover:bg-gray-700 transition-all duration-300 group" style="background-color: rgba(31, 41, 55, 0.8); backdrop-filter: blur(12px);">
+                <div class="w-16 h-16 bg-purple-500 bg-opacity-20 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                    <i class="fas fa-users text-2xl text-purple-400"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-4">深度用户画像分析</h3>
+                <p class="text-gray-300 leading-relaxed">
+                    基于大数据构建精准的目标用户画像，包括需求分析、行为预测和市场细分。
+                </p>
+            </div>
+
+            <!-- 功能卡片3 -->
+            <div class="glass-effect p-8 rounded-xl hover:bg-gray-700 transition-all duration-300 group" style="background-color: rgba(31, 41, 55, 0.8); backdrop-filter: blur(12px);">
+                <div class="w-16 h-16 bg-green-500 bg-opacity-20 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                    <i class="fas fa-crosshairs text-2xl text-green-400"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-4">竞争对手研究</h3>
+                <p class="text-gray-300 leading-relaxed">
+                    智能识别主要竞争对手，分析其优势劣势，为您的差异化策略提供数据支撑。
+                </p>
+            </div>
+
+            <!-- 功能卡片4 -->
+            <div class="glass-effect p-8 rounded-xl hover:bg-gray-700 transition-all duration-300 group" style="background-color: rgba(31, 41, 55, 0.8); backdrop-filter: blur(12px);">
+                <div class="w-16 h-16 bg-orange-500 bg-opacity-20 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                    <i class="fas fa-dollar-sign text-2xl text-orange-400"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-4">财务模型预测</h3>
+                <p class="text-gray-300 leading-relaxed">
+                    自动生成收入预测、成本分析和投资回报模型，帮您制定合理的财务规划。
+                </p>
+            </div>
+
+            <!-- 功能卡片5 -->
+            <div class="glass-effect p-8 rounded-xl hover:bg-gray-700 transition-all duration-300 group" style="background-color: rgba(31, 41, 55, 0.8); backdrop-filter: blur(12px);">
+                <div class="w-16 h-16 bg-red-500 bg-opacity-20 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                    <i class="fas fa-shield-alt text-2xl text-red-400"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-4">风险评估与应对</h3>
+                <p class="text-gray-300 leading-relaxed">
+                    全面识别潜在风险点，提供专业的风险缓解策略和应急预案建议。
+                </p>
+            </div>
+
+            <!-- 功能卡片6 -->
+            <div class="glass-effect p-8 rounded-xl hover:bg-gray-700 transition-all duration-300 group" style="background-color: rgba(31, 41, 55, 0.8); backdrop-filter: blur(12px);">
+                <div class="w-16 h-16 bg-cyan-500 bg-opacity-20 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                    <i class="fas fa-route text-2xl text-cyan-400"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-4">实施路线图</h3>
+                <p class="text-gray-300 leading-relaxed">
+                    制定详细的分阶段实施计划，包括时间节点、资源配置和关键里程碑。
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 使用流程 -->
+<section class="py-20" style="background: linear-gradient(to right, var(--sky-dark), var(--sky-mid));">
+    <div class="container mx-auto px-6">
+        <div class="text-center mb-16">
+            <h2 class="text-4xl font-bold text-white mb-6">简单三步，获得专业分析</h2>
+            <p class="text-xl text-gray-300">无需复杂操作，AI为您生成详细的商业策略报告</p>
+        </div>
+
+        <div class="max-w-4xl mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- 步骤1 -->
+                <div class="text-center group">
+                    <div class="w-20 h-20 bg-blue-500 bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
+                        <span class="text-3xl font-bold text-blue-400">1</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-4">描述您的想法</h3>
+                    <p class="text-gray-300">
+                        只需用简单的语言描述您的商业想法，包括产品概念、目标市场等基本信息。
+                    </p>
+                </div>
+
+                <!-- 步骤2 -->
+                <div class="text-center group">
+                    <div class="w-20 h-20 bg-purple-500 bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
+                        <span class="text-3xl font-bold text-purple-400">2</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-4">AI深度分析</h3>
+                    <p class="text-gray-300">
+                        AI将自动进行市场调研、竞争分析、用户研究等8个维度的深度分析。
+                    </p>
+                </div>
+
+                <!-- 步骤3 -->
+                <div class="text-center group">
+                    <div class="w-20 h-20 bg-green-500 bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
+                        <span class="text-3xl font-bold text-green-400">3</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-4">获得完整报告</h3>
+                    <p class="text-gray-300">
+                        收到包含策略建议、财务预测、实施计划的专业商业分析报告。
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="py-20 relative" style="background-color: var(--sky-dark);">
+    <div class="container mx-auto px-6 text-center">
+        <div class="max-w-4xl mx-auto">
+            <h2 class="text-4xl font-bold text-white mb-6">
+                准备好将您的商业想法变为现实吗？
+            </h2>
+            <p class="text-xl text-gray-300 mb-8">
+                加入已经使用PlanWise成功制定商业策略的创业者和企业家行列
+            </p>
+            
+            <?php if (is_logged_in()): ?>
+                <a href="/report.php" class="btn-primary text-xl px-12 py-5" style="background: linear-gradient(to right, #2563eb, #9333ea);">
+                    <i class="fas fa-rocket mr-3"></i>
+                    开始创建您的第一份报告
+                </a>
+            <?php else: ?>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="/register.php" class="btn-primary text-xl px-12 py-5" style="background: linear-gradient(to right, #2563eb, #9333ea);">
+                        <i class="fas fa-user-plus mr-3"></i>
+                        免费注册使用
+                    </a>
+                    <a href="/login.php" class="btn-secondary text-xl px-12 py-5">
+                        <i class="fas fa-sign-in-alt mr-3"></i>
+                        已有账号？立即登录
+                    </a>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
+</section>
+
+<?php
+// 包含尾部
+include __DIR__ . '/includes/footer.php';
+?>

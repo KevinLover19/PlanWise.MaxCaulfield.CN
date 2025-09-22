@@ -1,0 +1,54 @@
+<?php
+// 包含音乐播放器（只在前台页面显示，不在admin目录下显示）
+if (strpos($_SERVER['SCRIPT_NAME'], '/admin/') === false) {
+// require_once __DIR__ . '/music_player.php';
+}
+?>
+
+    <footer class="mt-16 md:mt-24 py-8 border-t border-[var(--border-color)] text-center text-[var(--text-secondary)] text-sm relative z-10">
+        <div class="container mx-auto px-6">
+             <p>&copy; <?php echo date("Y"); ?> MaxCaulfield's Blog. <span data-translate-key="footer_built_with">用 ❤️ 和代码构建.</span></p>
+             <p class="text-xs mt-1" data-translate-key="footer_icp_global">京ICP备2025127934号</p>
+             <p class="mt-1"><a href="https://maxcaulfield.cn/" class="hover:text-[var(--text-accent)]" data-translate-key="back_to_home">返回主页</a></p>
+        </div>
+    </footer>
+    <!-- Service Worker Registration -->
+    <script src="/js/sw-register.js"></script>
+    
+    <!-- Link Interceptor for Loading Screen -->
+    <!-- 暂时禁用加载页面功能，使用 Service Worker 代替 -->
+    <!-- <script src="/js/link-interceptor.js"></script> -->
+    <!-- Common closing body and html tags will be in the main PHP files -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 外部链接风险提示
+            const internalHostname = window.location.hostname;
+            const links = document.querySelectorAll('a');
+
+            links.forEach(link => {
+                if (link.href && link.host && link.host !== internalHostname) {
+                    // Check if the link is to a subdomain of maxcaulfield.cn (e.g., music.maxcaulfield.cn)
+                    const isMaxcaulfieldSubdomain = link.hostname.endsWith('.maxcaulfield.cn') || link.hostname === 'maxcaulfield.cn';
+                    
+                    if (!isMaxcaulfieldSubdomain && (link.protocol === "http:" || link.protocol === "https:")) {
+                        const originalUrl = link.href;
+                        link.href = `/link.html?url=${encodeURIComponent(originalUrl)}`;
+                        link.target = '_blank';
+                        link.rel = 'noopener noreferrer';
+                    }
+                }
+            });
+
+            // 文章内图片懒加载
+            const postContent = document.querySelector('.post-body');
+            if (postContent) {
+                const images = postContent.querySelectorAll('img');
+                images.forEach(img => {
+                    img.setAttribute('loading', 'lazy');
+                    img.setAttribute('decoding', 'async');
+                });
+            }
+        });
+    </script>
+</body>
+</html>

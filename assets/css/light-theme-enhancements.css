@@ -1,0 +1,264 @@
+/* PlanWise AI - 亮色主题增强样式 */
+
+/* 亮色主题表单元素优化 */
+.light-theme input[type="text"],
+.light-theme input[type="email"],
+.light-theme input[type="password"],
+.light-theme textarea,
+.light-theme select {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border: 1.5px solid rgba(226, 232, 240, 0.8) !important;
+    color: #1e293b !important;
+    box-shadow: 0 1px 3px rgba(148, 163, 184, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.light-theme input[type="text"]:focus,
+.light-theme input[type="email"]:focus,
+.light-theme input[type="password"]:focus,
+.light-theme textarea:focus,
+.light-theme select:focus {
+    border-color: #0f766e !important;
+    box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.1), 0 2px 8px rgba(15, 118, 110, 0.15) !important;
+    background: rgba(255, 255, 255, 1) !important;
+}
+
+/* 亮色主题复选框和单选框优化 */
+.light-theme input[type="checkbox"],
+.light-theme input[type="radio"] {
+    accent-color: #0f766e;
+}
+
+/* 亮色主题占位符文本 */
+.light-theme ::placeholder {
+    color: #94a3b8;
+    opacity: 1;
+}
+
+/* 亮色主题错误状态 */
+.light-theme .border-red-500 {
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+}
+
+/* 亮色主题成功状态 */
+.light-theme .border-green-500 {
+    border-color: #22c55e !important;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1) !important;
+}
+
+/* 亮色主题标签样式 */
+.light-theme label {
+    color: #374151 !important;
+    font-weight: 500;
+}
+
+/* 亮色主题链接优化 */
+.light-theme a:not(.btn-primary):not(.nav-link) {
+    color: #0f766e;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.light-theme a:not(.btn-primary):not(.nav-link):hover {
+    color: #0891b2;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 2px;
+}
+
+/* 亮色主题分隔线 */
+.light-theme .border-t {
+    border-color: rgba(226, 232, 240, 0.8) !important;
+}
+
+.light-theme .border-b {
+    border-color: rgba(226, 232, 240, 0.8) !important;
+}
+
+/* 亮色主题代码块 */
+.light-theme pre,
+.light-theme code {
+    background: rgba(241, 245, 249, 0.9) !important;
+    color: #1e293b !important;
+    border: 1px solid rgba(203, 213, 225, 0.5);
+}
+
+/* 亮色主题提醒框 */
+.light-theme .alert-info {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(99, 102, 241, 0.05) 100%);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    color: #1e40af;
+}
+
+.light-theme .alert-success {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.05) 0%, rgba(22, 163, 74, 0.05) 100%);
+    border: 1px solid rgba(34, 197, 94, 0.2);
+    color: #15803d;
+}
+
+.light-theme .alert-warning {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, rgba(217, 119, 6, 0.05) 100%);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+    color: #a16207;
+}
+
+.light-theme .alert-error {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.05) 0%, rgba(220, 38, 38, 0.05) 100%);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: #b91c1c;
+}
+
+/* 亮色主题加载动画 */
+.light-theme .loading-spinner {
+    border-top-color: #0f766e !important;
+    border-right-color: #06b6d4 !important;
+}
+
+/* 亮色主题进度条 */
+.light-theme .progress-bar {
+    background: linear-gradient(90deg, #0f766e, #06b6d4) !important;
+}
+
+/* 亮色主题工具提示 */
+.light-theme .tooltip {
+    background: rgba(30, 41, 59, 0.95) !important;
+    color: #f8fafc !important;
+    box-shadow: 0 4px 20px rgba(30, 41, 59, 0.2);
+}
+
+.light-theme .tooltip::after {
+    border-top-color: rgba(30, 41, 59, 0.95) !important;
+}
+
+/* 亮色主题模态框 */
+.light-theme .modal-overlay {
+    background: rgba(148, 163, 184, 0.4) !important;
+    backdrop-filter: blur(4px);
+}
+
+.light-theme .modal-content {
+    background: rgba(255, 255, 255, 0.98) !important;
+    border: 1px solid rgba(203, 213, 225, 0.5);
+    box-shadow: 0 20px 50px rgba(71, 85, 105, 0.15), 0 8px 25px rgba(71, 85, 105, 0.1);
+}
+
+/* 亮色主题表格 */
+.light-theme table {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.light-theme th {
+    background: rgba(248, 250, 252, 0.9);
+    color: #374151;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.8);
+}
+
+.light-theme td {
+    border-bottom: 1px solid rgba(241, 245, 249, 0.8);
+    color: #1e293b;
+}
+
+.light-theme tr:hover {
+    background: rgba(241, 245, 249, 0.5);
+}
+
+/* 亮色主题标签 */
+.light-theme .tag {
+    background: rgba(15, 118, 110, 0.1);
+    color: #0f766e;
+    border: 1px solid rgba(15, 118, 110, 0.2);
+}
+
+.light-theme .tag:hover {
+    background: rgba(15, 118, 110, 0.15);
+    border-color: rgba(15, 118, 110, 0.3);
+}
+
+/* 亮色主题面包屑 */
+.light-theme .breadcrumb {
+    color: #64748b;
+}
+
+.light-theme .breadcrumb a {
+    color: #0f766e;
+}
+
+.light-theme .breadcrumb a:hover {
+    color: #0891b2;
+}
+
+/* 亮色主题搜索框增强 */
+.light-theme .search-input {
+    background: rgba(255, 255, 255, 0.95);
+    border: 1.5px solid rgba(203, 213, 225, 0.6);
+    box-shadow: 0 2px 8px rgba(148, 163, 184, 0.08);
+}
+
+.light-theme .search-input:focus {
+    border-color: #0f766e;
+    box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.1), 0 4px 15px rgba(15, 118, 110, 0.15);
+}
+
+/* 亮色主题卡片标题 */
+.light-theme .card-title {
+    color: #1e293b;
+}
+
+.light-theme .card-subtitle {
+    color: #64748b;
+}
+
+/* 亮色主题分页器 */
+.light-theme .pagination-item {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(203, 213, 225, 0.6);
+    color: #374151;
+}
+
+.light-theme .pagination-item:hover {
+    background: rgba(15, 118, 110, 0.1);
+    border-color: #0f766e;
+    color: #0f766e;
+}
+
+.light-theme .pagination-item.active {
+    background: linear-gradient(135deg, #0f766e, #0891b2);
+    color: white;
+    border-color: #0f766e;
+}
+
+/* 亮色主题状态徽章 */
+.light-theme .badge-success {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: white;
+}
+
+.light-theme .badge-warning {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+}
+
+.light-theme .badge-error {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+}
+
+.light-theme .badge-info {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+}
+
+/* 亮色主题响应式优化 */
+@media (max-width: 768px) {
+    .light-theme .glass-effect {
+        box-shadow: 0 2px 15px rgba(148, 163, 184, 0.06), 
+                    0 1px 2px rgba(148, 163, 184, 0.04);
+    }
+    
+    .light-theme .btn-primary {
+        box-shadow: 0 3px 12px rgba(15, 118, 110, 0.2), 
+                    0 1px 4px rgba(15, 118, 110, 0.1);
+    }
+}

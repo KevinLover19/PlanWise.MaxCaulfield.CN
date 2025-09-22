@@ -1,0 +1,402 @@
+<?php
+// /www/wwwroot/planwise.maxcaulfield.cn/includes/header.php
+// 基于maxcaulfield.cn的header.php，适配PlanWise项目
+
+if (session_status() == PHP_SESSION_NONE) { 
+    session_start(); 
+}
+
+// 引入数据库连接
+$pdo = null;
+if (file_exists(__DIR__ . '/../db_connect.php')) {
+    require_once __DIR__ . '/../db_connect.php';
+    $pdo = getPDO();
+}
+
+// 检查用户会话和权限
+$is_logged_in = isset($_SESSION['user_id']);
+$user_name = isset($_SESSION['user_name']) ? $_SESSION['user_name'] : (isset($_SESSION['username']) ? $_SESSION['username'] : 'Guest');
+
+// 添加安全头
+header("X-Content-Type-Options: nosniff");
+header("X-Frame-Options: DENY");
+header("X-XSS-Protection: 1; mode=block");
+
+// SEO 和页面信息
+$page_actual_title = $page_actual_title ?? 'PlanWise AI - 商业策略智能体';
+$meta_description = $meta_description ?? '让AI帮你快速生成专业的商业分析报告，从市场调研到风险评估，从财务预测到营销策略，一站式解决商业决策难题。';
+$meta_keywords = $meta_keywords ?? 'AI商业分析,商业策略,市场调研,竞品分析,商业计划书,创业助手,PlanWise';
+
+// 规范链接
+$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+$domain_name = $_SERVER['HTTP_HOST'] ?? 'planwise.maxcaulfield.cn';
+$canonical_url = $protocol . $domain_name . $_SERVER['REQUEST_URI'];
+
+?>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
+    <title><?php echo htmlspecialchars($page_actual_title); ?></title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="<?php echo htmlspecialchars($meta_description); ?>">
+    <meta name="keywords" content="<?php echo htmlspecialchars($meta_keywords); ?>">
+    <meta name="robots" content="index,follow">
+    
+    <!-- 规范链接 -->
+    <link rel="canonical" href="<?php echo htmlspecialchars($canonical_url); ?>">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="<?php echo htmlspecialchars($page_actual_title); ?>">
+    <meta property="og:description" content="<?php echo htmlspecialchars($meta_description); ?>">
+    <meta property="og:url" content="<?php echo htmlspecialchars($canonical_url); ?>">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="PlanWise AI">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="<?php echo htmlspecialchars($page_actual_title); ?>">
+    <meta name="twitter:description" content="<?php echo htmlspecialchars($meta_description); ?>">
+    
+    <!-- 外部资源 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    
+    <!-- CSRF Token -->
+    <?php if (function_exists('generate_csrf_token')): ?>
+    <meta name="csrf-token" content="<?php echo htmlspecialchars(generate_csrf_token()); ?>">
+    <?php endif; ?>
+    
+    <style>
+        :root {
+            /* 暗色主题变量 */
+            --bg-primary-dark: #0b0f19;
+            --bg-secondary-dark: rgba(17, 24, 39, 0.8);
+            --bg-glass-dark: rgba(31, 41, 55, 0.6);
+            --text-primary-dark: #e5e7eb;
+            --text-secondary-dark: #9ca3af;
+            --text-accent-dark: #a7c7e7;
+            --border-color-dark: rgba(55, 65, 81, 0.5);
+            --glow-color-dark: rgba(173, 216, 230, 0.7);
+            
+            /* 亮色主题变量 */
+            --bg-primary-light: #ffffff;
+            --bg-secondary-light: rgba(249, 250, 251, 0.9);
+            --bg-glass-light: rgba(255, 255, 255, 0.8);
+            --text-primary-light: #1f2937;
+            --text-secondary-light: #6b7280;
+            --text-accent-light: #2563eb;
+            --border-color-light: rgba(209, 213, 219, 0.8);
+            --glow-color-light: rgba(37, 99, 235, 0.6);
+            
+            /* 默认为暗色主题 */
+            --bg-primary: var(--bg-primary-dark);
+            --bg-secondary: var(--bg-secondary-dark);
+            --bg-glass: var(--bg-glass-dark);
+            --text-primary: var(--text-primary-dark);
+            --text-secondary: var(--text-secondary-dark);
+            --text-accent: var(--text-accent-dark);
+            --border-color: var(--border-color-dark);
+            --glow-color: var(--glow-color-dark);
+        }
+        
+        /* 亮色主题覆盖 */
+        .light-theme {
+            --bg-primary: var(--bg-primary-light);
+            --bg-secondary: var(--bg-secondary-light);
+            --bg-glass: var(--bg-glass-light);
+            --text-primary: var(--text-primary-light);
+            --text-secondary: var(--text-secondary-light);
+            --text-accent: var(--text-accent-light);
+            --border-color: var(--border-color-light);
+            --glow-color: var(--glow-color-light);
+        }
+        
+        /* 基础样式 */
+        body {
+            background: linear-gradient(135deg, var(--bg-primary) 0%, rgba(17, 24, 39, 0.95) 100%);
+            color: var(--text-primary);
+            font-family: 'Inter', 'Noto Sans SC', sans-serif;
+            min-height: 100vh;
+            transition: all 0.3s ease;
+            overflow-x: hidden;
+        }
+        
+        /* 背景动画 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 20%, rgba(167, 199, 231, 0.1) 0%, transparent 30%),
+                        radial-gradient(circle at 70% 80%, rgba(99, 179, 237, 0.08) 0%, transparent 30%),
+                        radial-gradient(circle at 20% 70%, rgba(173, 216, 230, 0.06) 0%, transparent 30%);
+            animation: backgroundMove 20s ease-in-out infinite alternate;
+            z-index: -1;
+            pointer-events: none;
+        }
+        
+        @keyframes backgroundMove {
+            0% { transform: translateX(-10px) translateY(-10px); }
+            100% { transform: translateX(10px) translateY(10px); }
+        }
+        
+        .glass-effect {
+            background: var(--bg-glass);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .text-gradient {
+            background: linear-gradient(135deg, var(--text-accent), var(--glow-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        /* 头部样式 */
+        #main-header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            transition: all 0.3s ease;
+        }
+        
+        #main-header.scrolled {
+            background: var(--bg-glass);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        #main-header:not(.scrolled) {
+            background: transparent;
+            border-bottom: 1px solid transparent;
+        }
+        
+        /* 主题切换按钮样式 */
+        #theme-toggle {
+            transition: all 0.3s ease;
+        }
+        
+        #theme-toggle:hover {
+            transform: scale(1.1) rotate(15deg);
+        }
+        
+        /* 导航链接样式 */
+        .nav-link {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link:hover {
+            color: var(--text-accent);
+            transform: translateY(-2px);
+        }
+        
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--text-accent), var(--glow-color));
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+        }
+        
+        .nav-link:hover::after {
+            width: 100%;
+        }
+        
+        /* 按钮样式 */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--text-accent), var(--glow-color));
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(167, 199, 231, 0.3);
+        }
+        
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .nav-text {
+                display: none;
+            }
+        }
+        
+        /* 淡入动画 */
+        @keyframes fadeIn {
+            from { 
+                opacity: 0; 
+                transform: translateY(20px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0); 
+            }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+        
+        /* 页面加载动画 */
+        .stagger-fade > * {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+        
+        .stagger-fade > *:nth-child(1) { animation-delay: 0.1s; }
+        .stagger-fade > *:nth-child(2) { animation-delay: 0.2s; }
+        .stagger-fade > *:nth-child(3) { animation-delay: 0.3s; }
+        .stagger-fade > *:nth-child(4) { animation-delay: 0.4s; }
+        .stagger-fade > *:nth-child(5) { animation-delay: 0.5s; }
+    </style>
+    
+    <script>
+    // 立即应用保存的主题，避免闪烁
+    (function() {
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.documentElement.classList.remove('light-theme', 'dark-theme');
+        document.documentElement.classList.add(savedTheme + '-theme');
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            document.body.classList.remove('light-theme', 'dark-theme');
+            document.body.classList.add(savedTheme + '-theme');
+        });
+    })();
+    </script>
+</head>
+<body>
+    <header id="main-header" class="py-4">
+        <div class="container mx-auto px-6 flex justify-between items-center">
+            <a href="/index.php" class="text-2xl md:text-3xl font-bold">
+                <span class="text-gradient">PlanWise AI</span>
+            </a>
+            <nav class="flex items-center space-x-2">
+                <a href="/index.php" title="首页" class="nav-link p-2 rounded-full text-[var(--text-secondary)] hover:bg-[var(--bg-glass)]">
+                    <i class="fas fa-home text-lg"></i>
+                    <span class="nav-text ml-1 text-sm hidden md:inline">首页</span>
+                </a>
+                
+                <?php if ($is_logged_in): ?>
+                <a href="/dashboard.php" title="用户中心" class="nav-link p-2 rounded-full text-[var(--text-secondary)] hover:bg-[var(--bg-glass)]">
+                    <i class="fas fa-tachometer-alt text-lg"></i>
+                    <span class="nav-text ml-1 text-sm hidden md:inline">控制台</span>
+                </a>
+                <a href="/report.php" title="生成报告" class="nav-link p-2 rounded-full text-[var(--text-secondary)] hover:bg-[var(--bg-glass)]">
+                    <i class="fas fa-chart-line text-lg"></i>
+                    <span class="nav-text ml-1 text-sm hidden md:inline">生成报告</span>
+                </a>
+                <?php endif; ?>
+                
+                <a href="https://maxcaulfield.cn/blog.php" title="返回主站" class="nav-link p-2 rounded-full text-[var(--text-secondary)] hover:bg-[var(--bg-glass)]">
+                    <i class="fas fa-external-link-alt text-lg"></i>
+                    <span class="nav-text ml-1 text-sm hidden md:inline">主站</span>
+                </a>
+                
+                <button id="theme-toggle" aria-label="切换主题" class="p-2 rounded-full text-[var(--text-secondary)] hover:bg-[var(--bg-glass)]">
+                    <i id="theme-toggle-icon" class="fas text-lg"></i>
+                </button>
+                
+                <?php if ($is_logged_in): ?>
+                <div class="flex items-center space-x-2 ml-4">
+                    <span class="text-sm text-[var(--text-secondary)] hidden md:inline">
+                        欢迎，<?php echo htmlspecialchars($user_name); ?>
+                    </span>
+                    <a href="/logout.php" title="登出" class="p-2 rounded-full text-[var(--text-secondary)] hover:bg-[var(--bg-glass)]">
+                        <i class="fas fa-sign-out-alt text-lg"></i>
+                    </a>
+                </div>
+                <?php else: ?>
+                <a href="/login.php" title="登录" class="nav-link p-2 rounded-full text-[var(--text-secondary)] hover:bg-[var(--bg-glass)]">
+                    <i class="fas fa-sign-in-alt text-lg"></i>
+                    <span class="nav-text ml-1 text-sm hidden md:inline">登录</span>
+                </a>
+                <a href="/register.php" title="注册" class="btn-primary text-sm">
+                    <i class="fas fa-user-plus mr-1"></i>
+                    注册
+                </a>
+                <?php endif; ?>
+            </nav>
+        </div>
+    </header>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const themeToggle = document.getElementById('theme-toggle');
+        const header = document.getElementById('main-header');
+        
+        // 滚动效果
+        if (header) {
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 30) {
+                    header.classList.add('scrolled');
+                } else {
+                    header.classList.remove('scrolled');
+                }
+            });
+        }
+        
+        // 主题切换
+        if (themeToggle) {
+            let currentTheme = localStorage.getItem('theme') || 'dark';
+            const iconEl = themeToggle.querySelector('#theme-toggle-icon');
+
+            function applyTheme(theme) {
+                document.body.classList.remove('light-theme', 'dark-theme');
+                document.documentElement.classList.remove('light-theme', 'dark-theme');
+                
+                document.body.classList.add(theme + '-theme');
+                document.documentElement.classList.add(theme + '-theme');
+
+                if (iconEl) {
+                    iconEl.classList.remove('fa-sun', 'fa-moon');
+                    iconEl.classList.add(theme === 'light' ? 'fa-sun' : 'fa-moon');
+                }
+            }
+
+            applyTheme(currentTheme);
+
+            themeToggle.addEventListener('click', () => {
+                currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                localStorage.setItem('theme', currentTheme);
+                applyTheme(currentTheme);
+            });
+        }
+    });
+    </script>

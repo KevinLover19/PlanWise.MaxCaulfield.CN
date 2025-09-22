@@ -1,0 +1,163 @@
+<?php
+// PlanWise Footer - 生产环境优化版本
+?>
+    </main>
+    <!-- 主内容区域结束 -->
+
+    <!-- Footer -->
+    <footer class="relative z-20 bg-gray-900 text-gray-300 py-12 mt-16">
+        <div class="max-w-6xl mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- 关于 PlanWise -->
+                <div>
+                    <h3 class="text-xl font-bold text-white mb-4">
+                        <i class="fas fa-brain mr-2" style="color: var(--accent-primary);"></i>
+                        PlanWise AI
+                    </h3>
+                    <p class="text-gray-400 mb-4">
+                        AI驱动的商业策略分析平台，为您的商业想法提供专业的市场分析和策略建议。
+                    </p>
+                    <p class="text-sm text-gray-500">
+                        隶属于 <a href="https://maxcaulfield.cn" class="hover:text-white transition" style="color: var(--accent-link);">麦青春的麦田</a>
+                    </p>
+                </div>
+
+                <!-- 快速链接 -->
+                <div>
+                    <h4 class="text-lg font-semibold text-white mb-4">快速导航</h4>
+                    <ul class="space-y-2">
+                        <li><a href="/" class="text-gray-400 hover:text-white transition">首页</a></li>
+                        <?php if (is_logged_in()): ?>
+                            <li><a href="/dashboard.php" class="text-gray-400 hover:text-white transition">我的控制台</a></li>
+                            <li><a href="/report.php" class="text-gray-400 hover:text-white transition">创建报告</a></li>
+                        <?php else: ?>
+                            <li><a href="/login.php" class="text-gray-400 hover:text-white transition">登录</a></li>
+                            <li><a href="/register.php" class="text-gray-400 hover:text-white transition">注册</a></li>
+                        <?php endif; ?>
+                        <li><a href="https://maxcaulfield.cn" class="text-gray-400 hover:text-white transition">主站</a></li>
+                    </ul>
+                </div>
+
+                <!-- 联系信息 -->
+                <div>
+                    <h4 class="text-lg font-semibold text-white mb-4">联系我们</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li>
+                            <i class="fas fa-envelope mr-2"></i>
+                            <a href="mailto:contact@maxcaulfield.cn" class="hover:text-white transition">contact@maxcaulfield.cn</a>
+                        </li>
+                        <li>
+                            <i class="fas fa-globe mr-2"></i>
+                            <a href="https://maxcaulfield.cn" class="hover:text-white transition">maxcaulfield.cn</a>
+                        </li>
+                        <li class="text-sm text-gray-500 mt-4">
+                            <i class="fas fa-shield-alt mr-2"></i>
+                            数据安全 · 隐私保护
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-800 mt-8 pt-8 text-center">
+                <p class="text-gray-500 text-sm">
+                    &copy; <?= date('Y') ?> PlanWise - 麦青春的麦田 
+                    <span class="mx-2">|</span>
+                    <a href="https://maxcaulfield.cn/privacy.html" class="hover:text-white transition">隐私政策</a>
+                    <span class="mx-2">|</span>
+                    <a href="https://maxcaulfield.cn/terms.html" class="hover:text-white transition">使用条款</a>
+                </p>
+                <p class="text-gray-600 text-xs mt-2">
+                    Powered by AI Technology · Built with ❤️
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 背景装饰 -->
+    <div class="fixed inset-0 pointer-events-none overflow-hidden" style="z-index: -1;">
+        <div class="absolute top-1/4 -right-20 w-96 h-96 bg-blue-500 opacity-5 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-1/4 -left-20 w-96 h-96 bg-purple-500 opacity-5 rounded-full blur-3xl"></div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // 简单的 Dark Mode 支持
+        document.documentElement.style.setProperty('--bg-primary', '#0b0f19');
+        document.documentElement.style.setProperty('--bg-secondary', '#1a1f2e');
+        document.documentElement.style.setProperty('--text-primary', '#ffffff');
+        document.documentElement.style.setProperty('--text-secondary', '#b0b7c3');
+        document.documentElement.style.setProperty('--accent-primary', '#3b82f6');
+        document.documentElement.style.setProperty('--accent-secondary', '#8b5cf6');
+        document.documentElement.style.setProperty('--accent-link', '#60a5fa');
+        document.documentElement.style.setProperty('--border-color', '#374151');
+
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 平滑滚动
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'smooth' });
+                    }
+                });
+            });
+
+            // 移动端菜单切换（如果存在）
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const mobileMenu = document.getElementById('mobile-menu');
+            if (mobileMenuBtn && mobileMenu) {
+                mobileMenuBtn.addEventListener('click', function() {
+                    mobileMenu.classList.toggle('hidden');
+                });
+            }
+        });
+
+        // 添加一些交互效果
+        document.addEventListener('DOMContentLoaded', function() {
+            // 为所有按钮添加点击效果
+            document.querySelectorAll('button, .btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    const ripple = document.createElement('span');
+                    const rect = this.getBoundingClientRect();
+                    const size = Math.max(rect.width, rect.height);
+                    const x = e.clientX - rect.left - size / 2;
+                    const y = e.clientY - rect.top - size / 2;
+                    
+                    ripple.style.cssText = `
+                        position: absolute;
+                        border-radius: 50%;
+                        background: rgba(255,255,255,0.1);
+                        width: ${size}px;
+                        height: ${size}px;
+                        left: ${x}px;
+                        top: ${y}px;
+                        pointer-events: none;
+                        transform: scale(0);
+                        animation: ripple 0.6s linear;
+                    `;
+                    
+                    this.style.position = 'relative';
+                    this.style.overflow = 'hidden';
+                    this.appendChild(ripple);
+                    
+                    setTimeout(() => ripple.remove(), 600);
+                });
+            });
+        });
+
+        // CSS动画
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes ripple {
+                to {
+                    transform: scale(4);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

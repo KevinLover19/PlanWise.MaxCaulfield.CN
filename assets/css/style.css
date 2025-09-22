@@ -1,0 +1,13 @@
+/* /www/wwwroot/planwise.maxcaulfield.cn/assets/css/style.css */
+:root{ --brand:#0A4DCC; --bg:#f7f9fc; --text:#0b1220; }
+body{ background:var(--bg); color:var(--text); }
+.logo-circle{ width:28px; height:28px; background:var(--brand); border-radius:50%; }
+.hero .display-5{ color:var(--brand); }
+.btn-primary{ background:var(--brand); border-color:var(--brand); }
+.btn-primary:hover{ filter:brightness(0.95); }
+.progress-bar{ background-color:var(--brand); }
+.markdown-body h1,.markdown-body h2,.markdown-body h3{ color:#0b1220; margin-top:1rem; }
+.markdown-body pre, .markdown-body code{ background:#eef3ff; padding:2px 6px; border-radius:4px; }
+.list-group-item.pending{ background:#fffdf0; }
+.list-group-item.running{ background:#eef7ff; }
+.list-group-item.completed{ background:#f1fff3; }

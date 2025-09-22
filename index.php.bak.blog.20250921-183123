@@ -1,0 +1,184 @@
+<?php
+// PlanWise 首页
+require_once __DIR__ . '/db_connect.php';
+
+// 设置页面特定的变量
+$page_title = "首页";
+$page_description = "PlanWise - AI驱动的商业策略分析平台，为您的商业想法提供专业的市场分析和策略建议";
+$canonical_url = "https://planwise.maxcaulfield.cn/";
+
+// 包含头部
+include __DIR__ . '/includes/header.php';
+?>
+
+<!-- 首页主要内容 -->
+<section class="min-h-screen flex items-center justify-center text-center relative overflow-hidden px-4 z-10">
+    <div class="relative z-1 transition-transform duration-300 ease-out">
+        <div class="max-w-4xl mx-auto">
+            <!-- 主标题 -->
+            <div class="mb-8 reveal">
+                <h1 class="text-5xl md:text-6xl font-bold text-gradient mb-6">
+                    <i class="fas fa-brain mr-4 icon-glow floating"></i>
+                    PlanWise AI
+                </h1>
+                <p class="text-xl md:text-2xl text-gray-300 mb-4">
+                    AI驱动的商业策略分析平台
+                </p>
+                <p class="text-lg text-gray-400 max-w-2xl mx-auto">
+                    为您的商业想法提供专业的市场分析和策略建议，从创意到实现的全程智能助手
+                </p>
+            </div>
+
+            <!-- 功能特色 -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 reveal">
+                <div class="premium-card p-6 text-center floating">
+                    <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-chart-line text-2xl text-blue-400 icon-glow"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-3">市场分析</h3>
+                    <p class="text-gray-400">深度分析目标市场环境，识别机遇与挑战</p>
+                </div>
+
+                <div class="premium-card p-6 text-center floating">
+                    <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-users text-2xl text-purple-400 icon-glow"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-3">用户画像</h3>
+                    <p class="text-gray-400">构建精准的目标用户画像，洞察客户需求</p>
+                </div>
+
+                <div class="premium-card p-6 text-center floating">
+                    <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-rocket text-2xl text-green-400 icon-glow"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-3">策略建议</h3>
+                    <p class="text-gray-400">提供可执行的商业策略和实施路线图</p>
+                </div>
+            </div>
+
+            <!-- CTA按钮 -->
+            <div class="flex flex-col sm:flex-row gap-4 justify-center mb-12 reveal">
+                <?php if (is_logged_in()): ?>
+                    <a href="/dashboard.php" class="cta-button">
+                        <i class="fas fa-tachometer-alt mr-2"></i>
+                        进入控制台
+                    </a>
+                    <a href="/report.php" class="cta-button">
+                        <i class="fas fa-plus mr-2"></i>
+                        创建新报告
+                    </a>
+                <?php else: ?>
+                    <a href="/register.php" class="cta-button">
+                        <i class="fas fa-user-plus mr-2"></i>
+                        立即开始
+                    </a>
+                    <a href="/login.php" class="cta-button bg-gray-600 hover:bg-gray-500">
+                        <i class="fas fa-sign-in-alt mr-2"></i>
+                        用户登录
+                    </a>
+                <?php endif; ?>
+            </div>
+
+            <!-- 统计数据 -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-2xl mx-auto reveal">
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-gradient mb-2">500+</div>
+                    <div class="text-sm text-gray-400 uppercase tracking-wide">分析报告</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-gradient mb-2">95%</div>
+                    <div class="text-sm text-gray-400 uppercase tracking-wide">准确率</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-gradient mb-2">24/7</div>
+                    <div class="text-sm text-gray-400 uppercase tracking-wide">智能服务</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 产品介绍区域 -->
+<section class="py-20 relative z-10">
+    <div class="max-w-6xl mx-auto px-4">
+        <div class="text-center mb-16 reveal">
+            <h2 class="text-4xl font-bold text-white mb-6">
+                为什么选择 PlanWise？
+            </h2>
+            <p class="text-xl text-gray-400 max-w-3xl mx-auto">
+                我们结合先进的人工智能技术和深度商业洞察，为您提供专业级的商业策略分析服务
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div class="reveal">
+                <div class="premium-card p-8">
+                    <h3 class="text-2xl font-bold text-white mb-6">
+                        <i class="fas fa-magic mr-3 text-yellow-400"></i>
+                        AI 智能分析
+                    </h3>
+                    <div class="space-y-4 text-gray-300">
+                        <div class="flex items-start space-x-3">
+                            <i class="fas fa-check-circle text-green-400 mt-1"></i>
+                            <div>
+                                <strong class="text-white">8步深度分析</strong>
+                                <p class="text-sm text-gray-400">从市场环境到实施计划的全方位分析</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <i class="fas fa-check-circle text-green-400 mt-1"></i>
+                            <div>
+                                <strong class="text-white">实时数据支持</strong>
+                                <p class="text-sm text-gray-400">基于最新市场数据和行业趋势</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <i class="fas fa-check-circle text-green-400 mt-1"></i>
+                            <div>
+                                <strong class="text-white">个性化建议</strong>
+                                <p class="text-sm text-gray-400">针对您的具体情况量身定制</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="reveal">
+                <div class="premium-card p-8">
+                    <h3 class="text-2xl font-bold text-white mb-6">
+                        <i class="fas fa-shield-alt mr-3 text-blue-400"></i>
+                        专业可靠
+                    </h3>
+                    <div class="space-y-4 text-gray-300">
+                        <div class="flex items-start space-x-3">
+                            <i class="fas fa-check-circle text-green-400 mt-1"></i>
+                            <div>
+                                <strong class="text-white">数据安全保护</strong>
+                                <p class="text-sm text-gray-400">企业级安全防护，保障您的商业机密</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <i class="fas fa-check-circle text-green-400 mt-1"></i>
+                            <div>
+                                <strong class="text-white">专业团队支持</strong>
+                                <p class="text-sm text-gray-400">资深商业分析师团队技术保障</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <i class="fas fa-check-circle text-green-400 mt-1"></i>
+                            <div>
+                                <strong class="text-white">持续优化升级</strong>
+                                <p class="text-sm text-gray-400">算法模型持续优化，分析质量不断提升</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<?php
+// 包含尾部
+include __DIR__ . '/includes/footer.php';
+?>
