@@ -21,6 +21,7 @@ $meta_description = '使用PlanWise AI创建详细的商业策略分析报告，
 $meta_keywords = '商业策略报告,市场分析,竞争对手研究,AI分析,商业计划书,PlanWise';
 
 require_once __DIR__ . '/includes/header.php';
+$csrf_token = csrf_token();
 ?>
 
 <main class="container mx-auto px-4 sm:px-6 lg:px-8 mt-8 mb-8">
@@ -37,8 +38,8 @@ require_once __DIR__ . '/includes/header.php';
     <!-- 报告生成表单 -->
     <div class="max-w-4xl mx-auto">
         <div class="glass-effect p-8 md:p-12 fade-in">
-            <form id="report-form" method="post" action="/api.php" class="space-y-8">
-                <input type="hidden" name="action" value="create_report">
+            <form id="report-form" method="post" class="space-y-8">
+                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf_token, ENT_QUOTES, 'UTF-8'); ?>">
                 
                 <!-- 基本信息 -->
                 <div class="space-y-6">
@@ -151,258 +152,98 @@ require_once __DIR__ . '/includes/header.php';
                 <div class="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
                     <i class="fas fa-brain text-2xl text-white"></i>
                 </div>
-                <h3 class="text-2xl font-semibold text-[var(--text-primary)] mb-2">AI正在分析您的商业想法</h3>
-                <p class="text-[var(--text-secondary)]">请稍候，我们正在从多个维度为您生成专业的分析报告...</p>
+                <h3 class="text-2xl font-semibold text-[var(--text-primary)] mb-2">AI 正在分析您的商业想法</h3>
+                <p class="text-[var(--text-secondary)]">请稍候，我们将分阶段展示分析进度与洞察结果。</p>
             </div>
-            
-            <!-- 分析步骤 -->
-            <div class="space-y-4">
-                <div class="analysis-step flex items-center p-4 rounded-lg bg-[var(--bg-secondary)]" data-step="1">
-                    <div class="step-icon w-8 h-8 rounded-full bg-[var(--text-accent)] flex items-center justify-center mr-4">
-                        <i class="fas fa-search text-white text-sm"></i>
+
+            <div class="space-y-6">
+                <div>
+                    <div class="flex items-center justify-between mb-3 text-sm text-[var(--text-secondary)]">
+                        <span>分析进度</span>
+                        <span id="task-progress-percent">0%</span>
                     </div>
-                    <div class="flex-1">
-                        <div class="step-title font-medium text-[var(--text-primary)]">市场环境分析</div>
-                        <div class="step-description text-sm text-[var(--text-secondary)]">正在分析目标市场...</div>
-                    </div>
-                    <div class="step-status">
-                        <i class="fas fa-clock text-[var(--text-secondary)]"></i>
+                    <div class="w-full h-2 rounded-full bg-gray-200 overflow-hidden">
+                        <div id="task-progress-bar" class="h-2 rounded-full bg-gradient-to-r from-[var(--text-accent)] to-[var(--glow-color)] transition-all duration-500" style="width:0%"></div>
                     </div>
                 </div>
-                
-                <div class="analysis-step flex items-center p-4 rounded-lg bg-[var(--bg-secondary)]" data-step="2">
-                    <div class="step-icon w-8 h-8 rounded-full bg-gray-400 flex items-center justify-center mr-4">
-                        <i class="fas fa-users text-white text-sm"></i>
-                    </div>
-                    <div class="flex-1">
-                        <div class="step-title font-medium text-[var(--text-primary)]">竞争对手研究</div>
-                        <div class="step-description text-sm text-[var(--text-secondary)]">等待中...</div>
-                    </div>
-                    <div class="step-status">
-                        <i class="fas fa-clock text-[var(--text-secondary)]"></i>
-                    </div>
+
+                <div>
+                    <h3 class="text-lg font-semibold text-[var(--text-primary)] mb-3">分析步骤</h3>
+                    <div id="task-step-list" class="space-y-3"></div>
                 </div>
-                
-                <div class="analysis-step flex items-center p-4 rounded-lg bg-[var(--bg-secondary)]" data-step="3">
-                    <div class="step-icon w-8 h-8 rounded-full bg-gray-400 flex items-center justify-center mr-4">
-                        <i class="fas fa-user-tie text-white text-sm"></i>
+
+                <div class="border-t border-dashed border-[var(--border-color)] pt-6">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-lg font-semibold text-[var(--text-primary)]">阶段性洞察</h3>
+                        <span class="text-xs text-[var(--text-secondary)]">结果将实时刷新</span>
                     </div>
-                    <div class="flex-1">
-                        <div class="step-title font-medium text-[var(--text-primary)]">目标用户画像</div>
-                        <div class="step-description text-sm text-[var(--text-secondary)]">等待中...</div>
-                    </div>
-                    <div class="step-status">
-                        <i class="fas fa-clock text-[var(--text-secondary)]"></i>
-                    </div>
-                </div>
-                
-                <div class="analysis-step flex items-center p-4 rounded-lg bg-[var(--bg-secondary)]" data-step="4">
-                    <div class="step-icon w-8 h-8 rounded-full bg-gray-400 flex items-center justify-center mr-4">
-                        <i class="fas fa-cogs text-white text-sm"></i>
-                    </div>
-                    <div class="flex-1">
-                        <div class="step-title font-medium text-[var(--text-primary)]">商业模式设计</div>
-                        <div class="step-description text-sm text-[var(--text-secondary)]">等待中...</div>
-                    </div>
-                    <div class="step-status">
-                        <i class="fas fa-clock text-[var(--text-secondary)]"></i>
-                    </div>
-                </div>
-                
-                <div class="analysis-step flex items-center p-4 rounded-lg bg-[var(--bg-secondary)]" data-step="5">
-                    <div class="step-icon w-8 h-8 rounded-full bg-gray-400 flex items-center justify-center mr-4">
-                        <i class="fas fa-exclamation-triangle text-white text-sm"></i>
-                    </div>
-                    <div class="flex-1">
-                        <div class="step-title font-medium text-[var(--text-primary)]">风险评估</div>
-                        <div class="step-description text-sm text-[var(--text-secondary)]">等待中...</div>
-                    </div>
-                    <div class="step-status">
-                        <i class="fas fa-clock text-[var(--text-secondary)]"></i>
-                    </div>
-                </div>
-                
-                <div class="analysis-step flex items-center p-4 rounded-lg bg-[var(--bg-secondary)]" data-step="6">
-                    <div class="step-icon w-8 h-8 rounded-full bg-gray-400 flex items-center justify-center mr-4">
-                        <i class="fas fa-calculator text-white text-sm"></i>
-                    </div>
-                    <div class="flex-1">
-                        <div class="step-title font-medium text-[var(--text-primary)]">财务预测</div>
-                        <div class="step-description text-sm text-[var(--text-secondary)]">等待中...</div>
-                    </div>
-                    <div class="step-status">
-                        <i class="fas fa-clock text-[var(--text-secondary)]"></i>
-                    </div>
-                </div>
-                
-                <div class="analysis-step flex items-center p-4 rounded-lg bg-[var(--bg-secondary)]" data-step="7">
-                    <div class="step-icon w-8 h-8 rounded-full bg-gray-400 flex items-center justify-center mr-4">
-                        <i class="fas fa-bullhorn text-white text-sm"></i>
-                    </div>
-                    <div class="flex-1">
-                        <div class="step-title font-medium text-[var(--text-primary)]">营销策略</div>
-                        <div class="step-description text-sm text-[var(--text-secondary)]">等待中...</div>
-                    </div>
-                    <div class="step-status">
-                        <i class="fas fa-clock text-[var(--text-secondary)]"></i>
-                    </div>
-                </div>
-                
-                <div class="analysis-step flex items-center p-4 rounded-lg bg-[var(--bg-secondary)]" data-step="8">
-                    <div class="step-icon w-8 h-8 rounded-full bg-gray-400 flex items-center justify-center mr-4">
-                        <i class="fas fa-road text-white text-sm"></i>
-                    </div>
-                    <div class="flex-1">
-                        <div class="step-title font-medium text-[var(--text-primary)]">实施计划</div>
-                        <div class="step-description text-sm text-[var(--text-secondary)]">等待中...</div>
-                    </div>
-                    <div class="step-status">
-                        <i class="fas fa-clock text-[var(--text-secondary)]"></i>
-                    </div>
+                    <div id="partial-results" class="space-y-4"></div>
                 </div>
             </div>
-            
-            <!-- 进度条 -->
-            <div class="mt-8">
-                <div class="flex justify-between text-sm text-[var(--text-secondary)] mb-2">
-                    <span>分析进度</span>
-                    <span><span id="progress-percent">0</span>%</span>
+        </div>
+
+        <div id="final-report" class="glass-effect p-8 mt-8 hidden">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+                <div>
+                    <h2 class="text-2xl font-semibold text-[var(--text-primary)]">AI 分析报告</h2>
+                    <p class="text-sm text-[var(--text-secondary)] mt-1">报告生成后将展示完整章节，可直接复制或导出。</p>
                 </div>
-                <div class="w-full bg-gray-200 rounded-full h-2">
-                    <div id="progress-bar" class="bg-gradient-to-r from-[var(--text-accent)] to-[var(--glow-color)] h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                <div class="flex items-center gap-3">
+                    <button type="button" onclick="openAIGCModal('ad_copy')" class="px-4 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow hover:shadow-lg transition-all">
+                        <i class="fas fa-magic mr-2"></i>AI 创意工具箱
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- AIGC 交互模态框 -->
+        <div id="aigcModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-black/40 backdrop-blur">
+            <div class="flex items-center justify-center min-h-screen p-4">
+                <div class="bg-white dark:bg-[var(--bg-secondary)] rounded-lg shadow-xl max-w-2xl w-full">
+                    <div class="p-6 space-y-6">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-lg font-semibold" id="aigcTitle"></h3>
+                            <button type="button" onclick="closeAIGCModal()" class="text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-[var(--text-primary)] mb-2">创意风格</label>
+                                <select id="creativeStyle" class="w-full px-3 py-2 border border-[var(--border-color)] rounded-lg bg-[var(--bg-secondary)] text-[var(--text-primary)]">
+                                    <option value="professional">专业正式</option>
+                                    <option value="creative">创意活泼</option>
+                                    <option value="minimalist">简约现代</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-[var(--text-primary)] mb-2">生成数量</label>
+                                <input type="range" id="generateCount" min="1" max="5" value="3" class="w-full" oninput="updateCountDisplay(this.value)">
+                                <span id="countDisplay" class="text-xs text-[var(--text-secondary)]">3个方案</span>
+                            </div>
+                        </div>
+
+                        <div id="aigcResults" class="space-y-3 max-h-96 overflow-y-auto pr-1"></div>
+
+                        <div class="flex justify-end gap-3">
+                            <button type="button" onclick="regenerateContent()" class="px-4 py-2 rounded-lg border border-[var(--border-color)] text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]">
+                                重新生成
+                            </button>
+                            <button type="button" onclick="insertToReport()" class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">
+                                插入报告
+                            </button>
+                            <button type="button" onclick="closeAIGCModal()" class="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200">
+                                关闭
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </main>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('report-form');
-    const submitBtn = document.getElementById('submit-btn');
-    const btnText = document.getElementById('btn-text');
-    const loadingIcon = document.getElementById('loading-icon');
-    const progressSection = document.getElementById('analysis-progress');
-    const progressBar = document.getElementById('progress-bar');
-    const progressPercent = document.getElementById('progress-percent');
-
-    form.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        // 表单验证
-        if (!validateForm()) {
-            return;
-        }
-        
-        // 显示加载状态
-        submitBtn.disabled = true;
-        btnText.textContent = '正在提交...';
-        loadingIcon.classList.remove('hidden');
-        
-        // 显示进度区域
-        progressSection.classList.remove('hidden');
-        progressSection.scrollIntoView({ behavior: 'smooth' });
-        
-        // 开始模拟分析进度
-        startAnalysisSimulation();
-        
-        try {
-            const formData = new FormData(form);
-            const response = await fetch('/api.php', {
-                method: 'POST',
-                body: formData
-            });
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                // 分析完成，跳转到报告页面
-                window.location.href = `/view_report.php?id=${result.report_id}`;
-            } else {
-                throw new Error(result.message || '生成报告失败');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            alert('生成报告时出现错误：' + error.message);
-            
-            // 重置按钮状态
-            submitBtn.disabled = false;
-            btnText.textContent = '开始AI分析';
-            loadingIcon.classList.add('hidden');
-            progressSection.classList.add('hidden');
-        }
-    });
-    
-    function validateForm() {
-        const businessName = document.getElementById('business_name').value.trim();
-        const industry = document.getElementById('industry').value;
-        const description = document.getElementById('business_description').value.trim();
-        
-        if (!businessName) {
-            alert('请输入项目/产品名称');
-            return false;
-        }
-        
-        if (!industry) {
-            alert('请选择所属行业');
-            return false;
-        }
-        
-        if (!description || description.length < 50) {
-            alert('请详细描述您的商业想法（至少50个字符）');
-            return false;
-        }
-        
-        return true;
-    }
-    
-    function startAnalysisSimulation() {
-        let currentStep = 0;
-        const steps = document.querySelectorAll('.analysis-step');
-        const stepDescriptions = [
-            '正在分析目标市场规模和发展趋势...',
-            '正在识别主要竞争对手和市场格局...',
-            '正在构建目标用户画像...',
-            '正在设计可持续的盈利模式...',
-            '正在识别潜在风险和挑战...',
-            '正在进行财务建模和预测...',
-            '正在制定营销推广策略...',
-            '正在规划实施路线图...'
-        ];
-        
-        function updateStep() {
-            if (currentStep < steps.length) {
-                const step = steps[currentStep];
-                const icon = step.querySelector('.step-icon');
-                const description = step.querySelector('.step-description');
-                const status = step.querySelector('.step-status');
-                
-                // 更新当前步骤
-                icon.classList.remove('bg-gray-400');
-                icon.classList.add('bg-[var(--text-accent)]');
-                description.textContent = stepDescriptions[currentStep];
-                status.innerHTML = '<i class="fas fa-spinner fa-spin text-[var(--text-accent)]"></i>';
-                
-                // 更新进度条
-                const progress = ((currentStep + 1) / steps.length) * 100;
-                progressBar.style.width = progress + '%';
-                progressPercent.textContent = Math.round(progress);
-                
-                setTimeout(() => {
-                    // 标记为完成
-                    status.innerHTML = '<i class="fas fa-check text-green-500"></i>';
-                    currentStep++;
-                    
-                    if (currentStep < steps.length) {
-                        setTimeout(updateStep, 500);
-                    }
-                }, Math.random() * 2000 + 2000); // 2-4秒随机间隔
-            }
-        }
-        
-        updateStep();
-    }
-});
-</script>
+<script src="/assets/js/task_manager.js"></script>
 
 <?php require_once __DIR__ . '/includes/footer.php'; ?>
