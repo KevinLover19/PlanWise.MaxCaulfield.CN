@@ -9,7 +9,7 @@ class AI_Service_Enhanced
     private int $maxRetries = 3;
     private int $baseDelay = 1000; // milliseconds
     private int $maxDelay = 32000; // milliseconds
-    private array $lastProvider = [];
+
 
     public function __construct(?array $providers = null)
     {
@@ -48,7 +48,7 @@ class AI_Service_Enhanced
         $lastError = null;
 
         foreach ($this->providers as $provider) {
-            $this->lastProvider = [];
+
             $attempt = 0;
             $providerId = $provider['id'] ?? ($provider['type'] ?? 'unknown');
 
@@ -127,7 +127,7 @@ class AI_Service_Enhanced
         $type = strtolower($provider['type'] ?? 'mock');
 
         if ($type === 'mock') {
-            return $this->generateMockResponse($provider, $prompt, $options);
+
         }
 
         if (empty($provider['api_key'])) {
@@ -136,10 +136,7 @@ class AI_Service_Enhanced
 
         $headers = $this->buildHeaders($provider);
         $body = $this->buildRequestBody($provider, $prompt, $options);
-        $providerForRecord = $provider;
-        if (isset($body['model'])) {
-            $providerForRecord['model'] = $body['model'];
-        }
+
 
         $responseHeaders = [];
         $ch = curl_init();
@@ -190,9 +187,7 @@ class AI_Service_Enhanced
             throw $exception;
         }
 
-        $parsed = $this->parseResponse($provider, $response);
-        $this->rememberProvider($providerForRecord);
-        return $parsed;
+
     }
 
     private function buildHeaders(array $provider): array
@@ -343,16 +338,11 @@ class AI_Service_Enhanced
         return [];
     }
 
-    private function generateMockResponse(array $provider, string $prompt, array $options): string
+
     {
         $hash = substr(md5($prompt), 0, 6);
         $system = $options['system_prompt'] ?? '资深商业策略顾问';
 
-        $this->rememberProvider([
-            'id' => $provider['id'] ?? 'mock',
-            'type' => 'mock',
-            'model' => $provider['model'] ?? 'mock-strategy-writer',
-        ]);
 
         return <<<TEXT
 # 模拟商业策略分析（{$hash}）
@@ -365,18 +355,4 @@ class AI_Service_Enhanced
 TEXT;
     }
 
-    private function rememberProvider(array $provider): void
-    {
-        $this->lastProvider = [
-            'id' => $provider['id'] ?? null,
-            'type' => $provider['type'] ?? null,
-            'model' => $provider['model'] ?? null,
-            'endpoint' => $provider['endpoint'] ?? null,
-        ];
-    }
-
-    public function getLastProvider(): ?array
-    {
-        return $this->lastProvider ?: null;
-    }
 }

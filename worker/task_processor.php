@@ -105,31 +105,6 @@ class TaskProcessor
         $stepCount = count($steps);
 
         foreach ($steps as $index => $step) {
-            $this->markStepProcessing($task, $step);
-            $this->updateTaskProgress($task['task_id'], $index + 1, $stepCount, '正在处理：' . $step['title']);
-
-            try {
-                $prompt = $this->buildStepPrompt($step, $context, $results);
-                $start = microtime(true);
-                $response = $this->aiService->callWithRetry($prompt, [
-                    'system_prompt' => $this->buildSystemPrompt($context, $step['title']),
-                    'temperature' => $context['analysis_depth'] === 'deep' ? 0.6 : 0.8,
-                ]);
-                $duration = (int) ((microtime(true) - $start) * 1000);
-                $provider = $this->aiService->getLastProvider();
-                $modelName = $provider['model'] ?? ($provider['type'] ?? null);
-
-                $results[$step['name']] = $response;
-                $this->saveStepResult($task, $step, $response, $duration, $modelName);
-            } catch (Throwable $e) {
-                $this->markStepFailed($task, $step, $e->getMessage());
-                throw $e;
-            }
-
-            usleep(300000); // 0.3s pacing
-        }
-
-        $this->updateTaskProgress($task['task_id'], $stepCount, $stepCount, 'AI 已完成所有分析阶段');
 
         return $results;
     }
@@ -173,80 +148,7 @@ class TaskProcessor
         $stmt->execute([$currentStep, $totalSteps, $message, $taskId]);
     }
 
-    private function markStepProcessing(array $task, array $step): void
-    {
-        $stmt = $this->db->prepare("UPDATE planwise_report_steps SET status = 'processing', task_id = ?, started_at = COALESCE(started_at, NOW()), error_message = NULL WHERE step_id = ?");
-        $stmt->execute([
-            $task['task_id'],
-            $this->buildStepId($task['report_id'], $step['name']),
-        ]);
 
-        if ($stmt->rowCount() === 0) {
-            $insert = $this->db->prepare("INSERT INTO planwise_report_steps (step_id, report_id, step_number, step_name, step_title, task_id, status, started_at, created_at) VALUES (?, ?, ?, ?, ?, ?, 'processing', NOW(), NOW())");
-            $insert->execute([
-                $this->buildStepId($task['report_id'], $step['name']),
-                $task['report_id'],
-                $this->stepNumberFromName($step['name']),
-                $step['name'],
-                $step['title'],
-                $task['task_id'],
-            ]);
-        }
-    }
-
-    private function markStepFailed(array $task, array $step, string $error): void
-    {
-        $stmt = $this->db->prepare("UPDATE planwise_report_steps SET status = 'failed', task_id = ?, error_message = ?, completed_at = NOW() WHERE step_id = ?");
-        $stmt->execute([
-            $task['task_id'],
-            mb_substr($error, 0, 1000),
-            $this->buildStepId($task['report_id'], $step['name']),
-        ]);
-
-        if ($stmt->rowCount() === 0) {
-            $insert = $this->db->prepare("INSERT INTO planwise_report_steps (step_id, report_id, step_number, step_name, step_title, task_id, status, error_message, completed_at, created_at) VALUES (?, ?, ?, ?, ?, ?, 'failed', ?, NOW(), NOW())");
-            $insert->execute([
-                $this->buildStepId($task['report_id'], $step['name']),
-                $task['report_id'],
-                $this->stepNumberFromName($step['name']),
-                $step['name'],
-                $step['title'],
-                $task['task_id'],
-                mb_substr($error, 0, 1000),
-            ]);
-        }
-    }
-
-    private function saveStepResult(array $task, array $step, string $content, int $duration, ?string $model = null): void
-    {
-        $stepId = $this->buildStepId($task['report_id'], $step['name']);
-        $wordCount = mb_strlen(strip_tags($content));
-
-        $update = $this->db->prepare("UPDATE planwise_report_steps SET status = 'completed', formatted_content = ?, word_count = ?, processing_time = ?, completed_at = NOW(), task_id = ?, ai_model = ?, error_message = NULL WHERE step_id = ?");
-        $update->execute([
-            $content,
-            $wordCount,
-            $duration,
-            $task['task_id'],
-            $model,
-            $stepId,
-        ]);
-
-        if ($update->rowCount() === 0) {
-            $insert = $this->db->prepare("INSERT INTO planwise_report_steps (step_id, report_id, step_number, step_name, step_title, task_id, status, formatted_content, word_count, processing_time, ai_model, completed_at, created_at) VALUES (?, ?, ?, ?, ?, ?, 'completed', ?, ?, ?, ?, NOW(), NOW())");
-            $insert->execute([
-                $stepId,
-                $task['report_id'],
-                $this->stepNumberFromName($step['name']),
-                $step['name'],
-                $step['title'],
-                $task['task_id'],
-                $content,
-                $wordCount,
-                $duration,
-                $model,
-            ]);
-        }
     }
 
     private function completeTask(array $task, array $results): void
@@ -267,8 +169,6 @@ class TaskProcessor
         $this->db->prepare("UPDATE planwise_task_queue SET status = 'failed', completed_at = NOW(), error_message = ?, retry_count = retry_count + 1 WHERE id = ?")
             ->execute([$exception->getMessage(), $task['id']]);
 
-        $this->db->prepare("UPDATE planwise_task_queue SET payload = JSON_SET(COALESCE(payload, JSON_OBJECT()), '$.current_message', ?) WHERE id = ?")
-            ->execute([mb_substr($exception->getMessage(), 0, 255), $task['id']]);
 
         $this->db->prepare("UPDATE {$this->reportsTable} SET status = 'failed', last_error = ? WHERE report_id = ?")
             ->execute([$exception->getMessage(), $task['report_id']]);
@@ -276,10 +176,6 @@ class TaskProcessor
         error_log('[PlanWise][worker] Task failed: ' . $exception->getMessage());
     }
 
-    private function buildStepId(string $reportId, string $stepName): string
-    {
-        return 'step_' . $reportId . '_' . $stepName;
-    }
 
     private function stepNumberFromName(string $name): int
     {
