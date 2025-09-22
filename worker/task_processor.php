@@ -105,20 +105,6 @@ class TaskProcessor
         $stepCount = count($steps);
 
         foreach ($steps as $index => $step) {
-            $this->updateTaskProgress($task['task_id'], $index + 1, $stepCount, '正在处理：' . $step['title']);
-
-            $prompt = $this->buildStepPrompt($step, $context, $results);
-            $start = microtime(true);
-            $response = $this->aiService->callWithRetry($prompt, [
-                'system_prompt' => $this->buildSystemPrompt($context, $step['title']),
-                'temperature' => $context['analysis_depth'] === 'deep' ? 0.6 : 0.8,
-            ]);
-            $duration = (int) ((microtime(true) - $start) * 1000);
-
-            $results[$step['name']] = $response;
-            $this->saveStepResult($task, $step, $response, $duration);
-            usleep(300000); // 0.3s pacing
-        }
 
         return $results;
     }
@@ -162,22 +148,7 @@ class TaskProcessor
         $stmt->execute([$currentStep, $totalSteps, $message, $taskId]);
     }
 
-    private function saveStepResult(array $task, array $step, string $content, int $duration): void
-    {
-        $stepId = $step['name'] . '_' . $task['task_id'];
-        $stmt = $this->db->prepare("INSERT INTO planwise_report_steps (step_id, report_id, step_number, step_name, step_title, task_id, status, formatted_content, word_count, processing_time, completed_at, created_at) VALUES (?, ?, ?, ?, ?, ?, 'completed', ?, ?, ?, NOW(), NOW()) ON DUPLICATE KEY UPDATE status = VALUES(status), formatted_content = VALUES(formatted_content), word_count = VALUES(word_count), processing_time = VALUES(processing_time), completed_at = VALUES(completed_at)");
-        $wordCount = mb_strlen(strip_tags($content));
-        $stmt->execute([
-            $stepId,
-            $task['report_id'],
-            $this->stepNumberFromName($step['name']),
-            $step['name'],
-            $step['title'],
-            $task['task_id'],
-            $content,
-            $wordCount,
-            $duration,
-        ]);
+
     }
 
     private function completeTask(array $task, array $results): void
@@ -198,11 +169,13 @@ class TaskProcessor
         $this->db->prepare("UPDATE planwise_task_queue SET status = 'failed', completed_at = NOW(), error_message = ?, retry_count = retry_count + 1 WHERE id = ?")
             ->execute([$exception->getMessage(), $task['id']]);
 
+
         $this->db->prepare("UPDATE {$this->reportsTable} SET status = 'failed', last_error = ? WHERE report_id = ?")
             ->execute([$exception->getMessage(), $task['report_id']]);
 
         error_log('[PlanWise][worker] Task failed: ' . $exception->getMessage());
     }
+
 
     private function stepNumberFromName(string $name): int
     {

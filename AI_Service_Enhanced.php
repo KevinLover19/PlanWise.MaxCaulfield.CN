@@ -10,6 +10,7 @@ class AI_Service_Enhanced
     private int $baseDelay = 1000; // milliseconds
     private int $maxDelay = 32000; // milliseconds
 
+
     public function __construct(?array $providers = null)
     {
         $config = $this->loadConfig();
@@ -47,6 +48,7 @@ class AI_Service_Enhanced
         $lastError = null;
 
         foreach ($this->providers as $provider) {
+
             $attempt = 0;
             $providerId = $provider['id'] ?? ($provider['type'] ?? 'unknown');
 
@@ -125,7 +127,7 @@ class AI_Service_Enhanced
         $type = strtolower($provider['type'] ?? 'mock');
 
         if ($type === 'mock') {
-            return $this->generateMockResponse($prompt, $options);
+
         }
 
         if (empty($provider['api_key'])) {
@@ -134,6 +136,7 @@ class AI_Service_Enhanced
 
         $headers = $this->buildHeaders($provider);
         $body = $this->buildRequestBody($provider, $prompt, $options);
+
 
         $responseHeaders = [];
         $ch = curl_init();
@@ -184,7 +187,7 @@ class AI_Service_Enhanced
             throw $exception;
         }
 
-        return $this->parseResponse($provider, $response);
+
     }
 
     private function buildHeaders(array $provider): array
@@ -335,10 +338,11 @@ class AI_Service_Enhanced
         return [];
     }
 
-    private function generateMockResponse(string $prompt, array $options): string
+
     {
         $hash = substr(md5($prompt), 0, 6);
         $system = $options['system_prompt'] ?? '资深商业策略顾问';
+
 
         return <<<TEXT
 # 模拟商业策略分析（{$hash}）
@@ -350,4 +354,5 @@ class AI_Service_Enhanced
 （该内容为开发环境下的占位响应，用于在未配置真实模型密钥时保持功能可用。）
 TEXT;
     }
+
 }
