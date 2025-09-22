@@ -49,19 +49,18 @@
 
 ## API 说明
 
-- POST /api.php?action=create_task
-  - 参数：business_idea, industry(可选), analysis_depth(basic|standard|deep), csrf_token
-  - 返回：{ ok, task_id, next_csrf }
+- POST /api/task/create.php
+  - 参数：JSON body，包括 type(默认 analyze_business_idea)、data(表单字段)、csrf_token
+  - 返回：{ success, task_id, report_id, steps[], next_csrf }
 
-- GET /api.php?action=get_status&task_id=ID
-  - 返回：{ ok, status, current_step, progress, steps:[] }
+- GET /api/task/status.php?task_id=ID
+  - 返回：{ success, task:{...}, steps:[], partial_result:[], result:{executive_summary, sections}, report:{...} }
 
-- POST /api.php?action=tick
-  - 参数：task_id, csrf_token（每次由上次响应返回的 next_csrf 刷新）
-  - 返回：{ ok, step_key, step_title, content, next_csrf } 或 { ok, completed, next_csrf }
+### Worker 任务处理
 
-- GET /api.php?action=get_report&task_id=ID
-  - 返回：{ ok, report: { title, executive_summary, full_content } }
+- `php worker/task_processor.php`
+  - 常驻进程，消费 `planwise_task_queue` 中的 pending 任务
+  - 支持 `SIGTERM/SIGINT` 优雅退出，可由 Supervisor / systemd 管理
 
 ## 与主站集成
 
